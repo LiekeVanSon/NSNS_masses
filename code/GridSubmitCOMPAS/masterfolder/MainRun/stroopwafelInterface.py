@@ -301,8 +301,9 @@ def rejected_systems(locations, dimensions):
     return num_rejected
 
 
-def main():
-    global debug, mc_only, run_on_hpc, output_folder, output_filename, userunSubmit
+
+if __name__ == '__main__':
+    # global debug, mc_only, run_on_hpc, output_folder, output_filename, userunSubmit
 
     # STEP 1 : Import and assign input parameters for stroopwafel
     parser = argparse.ArgumentParser()
@@ -388,6 +389,3 @@ def main():
     end_time = time.time()
     print("Total running time = %d seconds" % (end_time - start_time))
 
-
-if __name__ == '__main__':
-    main()
