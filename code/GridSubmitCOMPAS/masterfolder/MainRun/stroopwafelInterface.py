@@ -39,6 +39,8 @@ run_on_hpc = False                  # Run on slurm based cluster HPC
 
 output_filename = 'samples.csv'     # output filename for the stroopwafel samples
 debug = False                       # show COMPAS output/errors
+hdf5 = True
+
 
 def create_dimensions():
     """
@@ -300,6 +302,8 @@ def rejected_systems(locations, dimensions):
 
 
 def main():
+    global debug, mc_only, run_on_hpc, output_folder, output_filename, userunSubmit
+
     # STEP 1 : Import and assign input parameters for stroopwafel
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_systems', help='Total number of systems', type=int, default=num_systems)
