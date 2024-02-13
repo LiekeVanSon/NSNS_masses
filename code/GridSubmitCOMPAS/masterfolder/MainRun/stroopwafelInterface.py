@@ -10,7 +10,7 @@ home_dir = os.path.expanduser("~")
 sys.path.append(home_dir + '/Programs/stroopwafel/') # Specific location for Lieke 
 from stroopwafel import sw, classes, prior, sampler, distributions, constants, utils
 import argparse
-from .runSubmit import pythonProgramOptions
+from runSubmit import pythonProgramOptions
 
 # TODO fix issues with adaptive sampling
 # TODO add in functionality for alternative runSubmit names and locations
