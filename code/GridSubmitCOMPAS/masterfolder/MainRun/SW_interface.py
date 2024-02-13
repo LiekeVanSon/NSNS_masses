@@ -1,21 +1,18 @@
 #!/usr/bin/env python
-import h5py as h5
+
 import os, sys
 import pandas as pd
 import shutil
 import time
 import numpy as np
-
-home_dir = os.path.expanduser("~")
-# sys.path.append(home_dir + '/Programs/stroopwafel/') # Specific location for Lieke 
 from stroopwafel import sw, classes, prior, sampler, distributions, constants, utils
 import argparse
-from runSubmit import pythonProgramOptions
-
-print(sys.path)
 
 # TODO fix issues with adaptive sampling
 # TODO add in functionality for alternative runSubmit names and locations
+
+home_dir = os.path.expanduser("~")
+
 
 #######################################################
 ### 
@@ -25,13 +22,13 @@ print(sys.path)
 
 
 ### Include options from local runSubmit + compasConfigDefault files      
-userunSubmit = True #If false, use stroopwafel defaults
+userunSubmit = False #If false, use stroopwafel defaults
 
 ### Set default stroopwafel inputs - these are overwritten by any command-line arguments
 
 compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS')   # Location of the executable      # Note: overrides runSubmit + compasConfigDefault.yaml value
-num_systems = int(1e2)                  # Number of binary systems to evolve                                              # Note: overrides runSubmit + compasConfigDefault.yaml value
-output_folder = home_dir + '/ceph/CompasOutput/v02.41.06/test'            # Location of output folder (relative to cwd)                                     # Note: overrides runSubmit + compasConfigDefault.yaml value
+num_systems = 1000                  # Number of binary systems to evolve                                              # Note: overrides runSubmit + compasConfigDefault.yaml value
+output_folder = home_dir + '/ceph/CompasOutput/v02.41.06/test'     # Location of output folder (relative to cwd)                                     # Note: overrides runSubmit + compasConfigDefault.yaml value
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides runSubmit + compasConfigDefault.yaml value
 
 num_cores = 4                       # Number of cores to parallelize over 
@@ -41,8 +38,6 @@ run_on_hpc = False                  # Run on slurm based cluster HPC
 
 output_filename = 'samples.csv'     # output filename for the stroopwafel samples
 debug = False                       # show COMPAS output/errors
-hdf5 = True
-
 
 def create_dimensions():
     """
@@ -123,7 +118,6 @@ def configure_code_run(batch):
     batch['output_container'] = output_container
     return compas_args
 
-
 def interesting_systems(batch):
     """
     This is a mandatory function, it tells stroopwafel what an interesting system is. User is free to define whatever looks interesting to them.
@@ -135,93 +129,27 @@ def interesting_systems(batch):
     """
     try:
         folder = os.path.join(output_folder, batch['output_container'])
-        #shutil.move(batch['grid_filename'], folder + '/grid_' + str(batch['number']) + '.csv')
-        # First try to find the csv file
-        if not hdf5:
-            system_parameters = pd.read_csv(folder + '/BSE_System_Parameters.csv', skiprows = 2)
-            system_parameters.rename(columns = lambda x: x.strip(), inplace = True)
-            seeds = system_parameters['SEED']
-            double_compact_objects = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
-            double_compact_objects.rename(columns = lambda x: x.strip(), inplace = True)
-        else:
-            # Check for hdf5 file
-            print('Lieke: line 146 (suspected hdf5 reading issue)')
-            sfile = h5.File(folder + '/batch_'+ str(batch['number']) +'.h5' ,'r')
-            seeds = sfile['BSE_System_Parameters']['SEED'][:]
+        shutil.move(batch['grid_filename'], folder + '/grid_' + str(batch['number']) + '.csv')
+        system_parameters = pd.read_csv(folder + '/BSE_System_Parameters.csv', skiprows = 2)
+        system_parameters.rename(columns = lambda x: x.strip(), inplace = True)
+        seeds = system_parameters['SEED']
         for index, sample in enumerate(batch['samples']):
             seed = seeds[index]
             sample.properties['SEED'] = seed
             sample.properties['is_hit'] = 0
             sample.properties['batch'] = batch['number']
-
-        if hdf5:
-            double_compact_objects = sfile['BSE_Double_Compact_Objects']
-
-        st1 = double_compact_objects['Stellar_Type(1)'][:]
-        st2 = double_compact_objects['Stellar_Type(2)'][:]
-        merger_flag = double_compact_objects['Merges_Hubble_Time'][:]    
-        dco_seeds = double_compact_objects['SEED'][:]
-
+        double_compact_objects = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
+        double_compact_objects.rename(columns = lambda x: x.strip(), inplace = True)
         #Generally, this is the line you would want to change.
-        if sys_int == 'BBH':
-            dco_mask = np.logical_and(st1 == 14, st2 == 14)
-        if sys_int == 'DNS':
-            dco_mask = np.logical_and(st1 == 13, st2 == 13)
-        if sys_int == 'BHNS':
-            dco_mask = np.logical_and(st1 == 14, st2 == 13) | np.logical_and(st1 == 13, st2 == 14)
-        merge_mask = merger_flag == 1
-        dns_mask = np.logical_and(merge_mask, dco_mask)
-
-        # Lieke: select systems of interest
-        interesting_systems_seeds = set(dco_seeds[dns_mask])
-        for index, sample in enumerate(batch['samples']):
+        dns = double_compact_objects[np.logical_and(double_compact_objects['Merges_Hubble_Time'] == 1, \
+            np.logical_and(double_compact_objects['Stellar_Type_1'] == 14, double_compact_objects['Stellar_Type_2'] == 14))]
+        interesting_systems_seeds = set(dns['SEED'])
+        for sample in batch['samples']:
             if sample.properties['SEED'] in interesting_systems_seeds:
                 sample.properties['is_hit'] = 1
-
-        # If you were working with an hdf5 file, make sure to close it again
-        if hdf5:
-            sfile.close()
-
-        return sum(dns_mask) #len(dns)
-
-    # You probably had no DCO's in your batch
+        return len(dns)
     except IOError as error:
-        print('You ran into an error, ', error)
         return 0
-
-
-# def interesting_systems(batch):
-#     """
-#     This is a mandatory function, it tells stroopwafel what an interesting system is. User is free to define whatever looks interesting to them.
-#     IN:
-#         batch (dict): As input you will be given the current batch which just finished its execution. You can take in all the keys you defined in the configure_code_run method above
-#     OUT:
-#         Number of interesting systems
-#         In the below example, I define all the NSs as interesting, so I read the files, get the SEED from the system_params file and define the key is_hit in the end for all interesting systems 
-#     """
-#     try:
-#         folder = os.path.join(output_folder, batch['output_container'])
-#         shutil.move(batch['grid_filename'], folder + '/grid_' + str(batch['number']) + '.csv')
-#         system_parameters = pd.read_csv(folder + '/BSE_System_Parameters.csv', skiprows = 2)
-#         system_parameters.rename(columns = lambda x: x.strip(), inplace = True)
-#         seeds = system_parameters['SEED']
-#         for index, sample in enumerate(batch['samples']):
-#             seed = seeds[index]
-#             sample.properties['SEED'] = seed
-#             sample.properties['is_hit'] = 0
-#             sample.properties['batch'] = batch['number']
-#         double_compact_objects = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
-#         double_compact_objects.rename(columns = lambda x: x.strip(), inplace = True)
-#         #Generally, this is the line you would want to change.
-#         dns = double_compact_objects[np.logical_and(double_compact_objects['Merges_Hubble_Time'] == 1, \
-#             np.logical_and(double_compact_objects['Stellar_Type_1'] == 14, double_compact_objects['Stellar_Type_2'] == 14))]
-#         interesting_systems_seeds = set(dns['SEED'])
-#         for sample in batch['samples']:
-#             if sample.properties['SEED'] in interesting_systems_seeds:
-#                 sample.properties['is_hit'] = 1
-#         return len(dns)
-#     except IOError as error:
-#         return 0
 
 def selection_effects(sw):
     """
@@ -235,44 +163,15 @@ def selection_effects(sw):
         rows = []
         for distribution in sw.adapted_distributions:
             folder = os.path.join(output_folder, 'batch_' + str(int(distribution.mean.properties['batch'])))
-            try:
-                dco_file = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
-                dco_file.rename(columns = lambda x: x.strip(), inplace = True)
-            except:
-                sfile = h5.File(folder + '/batch_'+ str(batch['number']) +'.h5' ,'r')
-                dco_file = sfile['BSE_Double_Compact_Objects']
-                sfile.close()
-
-            row = dco_file.loc[dco_file['SEED'][:] == distribution.mean.properties['SEED']]
-            rows.append([row.iloc[0]['Mass(1)'], row.iloc[0]['Mass(2)']])
+            dco_file = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
+            dco_file.rename(columns = lambda x: x.strip(), inplace = True)
+            row = dco_file.loc[dco_file['SEED'] == distribution.mean.properties['SEED']]
+            rows.append([row.iloc[0]['Mass_1'], row.iloc[0]['Mass_2']])
             biased_masses.append(np.power(max(rows[-1]), 2.2))
         # update the weights
         mean = np.mean(biased_masses)
         for index, distribution in enumerate(sw.adapted_distributions):
             distribution.biased_weight = np.power(max(rows[index]), 2.2) / mean
-
-# def selection_effects(sw):
-#     """
-#     This is not a mandatory function, it was written to support selection effects
-#     Fills in selection effects for each of the distributions
-#     IN:
-#         sw (Stroopwafel) : Stroopwafel object
-#     """
-#     if hasattr(sw, 'adapted_distributions'):
-#         biased_masses = []
-#         rows = []
-#         for distribution in sw.adapted_distributions:
-#             folder = os.path.join(output_folder, 'batch_' + str(int(distribution.mean.properties['batch'])))
-#             dco_file = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
-#             dco_file.rename(columns = lambda x: x.strip(), inplace = True)
-#             row = dco_file.loc[dco_file['SEED'] == distribution.mean.properties['SEED']]
-#             rows.append([row.iloc[0]['Mass_1'], row.iloc[0]['Mass_2']])
-#             biased_masses.append(np.power(max(rows[-1]), 2.2))
-#         # update the weights
-#         mean = np.mean(biased_masses)
-#         for index, distribution in enumerate(sw.adapted_distributions):
-#             distribution.biased_weight = np.power(max(rows[index]), 2.2) / mean
-
 
 def rejected_systems(locations, dimensions):
     """
@@ -305,50 +204,42 @@ def rejected_systems(locations, dimensions):
     return num_rejected
 
 
-
 if __name__ == '__main__':
-    # global debug, mc_only, run_on_hpc, output_folder, output_filename, userunSubmit
 
-    # STEP 1 : Import and assign input parameters for stroopwafel
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--num_systems', help='Total number of systems', type=int, default=num_systems)
-    parser.add_argument('--num_cores', help='Number of cores to run in parallel', type=int, default=num_cores)
-    parser.add_argument('--num_per_core', help='Number of systems to generate in one core', type=int,
-                        default=num_per_core)
-    parser.add_argument('--debug', help='If debug of COMPAS is to be printed', type=bool, default=debug)
-    parser.add_argument('--mc_only', help='If run in MC simulation mode only', type=bool, default=mc_only)
-    parser.add_argument('--run_on_hpc', help='If we are running on a (slurm-based) HPC', type=bool, default=run_on_hpc)
-    parser.add_argument('--output_filename', help='Output filename', default=output_filename)
-    parser.add_argument('--output_folder', help='Output folder name', default=output_folder)
+    # STEP 1 : Import and assign input parameters for stroopwafel 
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--num_systems', help = 'Total number of systems', type = int, default = num_systems)  
+    parser.add_argument('--num_cores', help = 'Number of cores to run in parallel', type = int, default = num_cores)
+    parser.add_argument('--num_per_core', help = 'Number of systems to generate in one core', type = int, default = num_per_core)
+    parser.add_argument('--debug', help = 'If debug of COMPAS is to be printed', type = bool, default = debug)
+    parser.add_argument('--mc_only', help = 'If run in MC simulation mode only', type = bool, default = mc_only)
+    parser.add_argument('--run_on_hpc', help = 'If we are running on a (slurm-based) HPC', type = bool, default = run_on_hpc)
+    parser.add_argument('--output_filename', help = 'Output filename', default = output_filename)
+    parser.add_argument('--output_folder', help = 'Output folder name', default = output_folder)
     namespace, extra_params = parser.parse_known_args()
 
-    print('Lieke: line 321')
-
-
     start_time = time.time()
-    # Define the parameters to the constructor of stroopwafel
-    TOTAL_NUM_SYSTEMS = namespace.num_systems  # total number of systems you want in the end
-    NUM_CPU_CORES = namespace.num_cores  # Number of cpu cores you want to run in parallel
-    NUM_SYSTEMS_PER_RUN = namespace.num_per_core  # Number of systems generated by each of run on each cpu core
-    debug = namespace.debug  # If True, will print the logs given by the external program (like COMPAS)
-    run_on_hpc = namespace.run_on_hpc  # If True, it will run on a clustered system helios, rather than your pc
-    mc_only = namespace.mc_only  # If you dont want to do the refinement phase and just do random mc exploration
-    output_filename = namespace.output_filename  # The name of the output file
+    #Define the parameters to the constructor of stroopwafel
+    TOTAL_NUM_SYSTEMS = namespace.num_systems #total number of systems you want in the end
+    NUM_CPU_CORES = namespace.num_cores #Number of cpu cores you want to run in parellel
+    NUM_SYSTEMS_PER_RUN = namespace.num_per_core #Number of systems generated by each of run on each cpu core
+    debug = namespace.debug #If True, will print the logs given by the external program (like COMPAS)
+    run_on_hpc = namespace.run_on_hpc #If True, it will run on a clustered system helios, rather than your pc
+    mc_only = namespace.mc_only # If you dont want to do the refinement phase and just do random mc exploration
+    output_filename = namespace.output_filename #The name of the output file
     output_folder = os.path.join(os.getcwd(), namespace.output_folder)
 
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()
-    commandOptions.update({'--output-path': output_folder})
-    commandOptions.update(
-        {'--logfile-delimiter': 'COMMA'})  # overridden if there is a runSubmit + compas ConfigDefault.yaml
-
-    print('Lieke: line 341')
+    commandOptions.update({'--output-path' : output_folder}) 
+    commandOptions.update({'--logfile-delimiter' : 'COMMA'})  # overriden if there is a runSubmit + compas ConfigDefault.yaml
 
     # Over-ride with runSubmit + compasConfigDefault.yaml parameters, if desired
     if userunSubmit:
         try:
-            programOptions = pythonProgramOptions()  # Call the programoption class from runSubmit
-            pySubOptions = programOptions.command  # Get the dict from pythonProgramOptions
+            from runSubmit import pythonProgramOptions
+            programOptions = pythonProgramOptions()   # Call the programoption class from runSubmit
+            pySubOptions   = programOptions.command   # Get the dict from pythonProgramOptions
 
             # Continue to work from the dict, by edditing SW related options
             # Remove extraneous options
@@ -361,56 +252,38 @@ if __name__ == '__main__':
 
             commandOptions.update(pySubOptions)
 
-            print('Lieke: line 360')
-
-
         except:
             print("Invalid runSubmit + compas ConfigDefault.yaml file, using default stroopwafel options")
             userunSubmit = False
+    
 
     print("Output folder is: ", output_folder)
     if os.path.exists(output_folder):
-        command = input(
-            "The output folder already exists. If you continue, I will remove all its content. Press (Y/N)\n")
+        command = input ("The output folder already exists. If you continue, I will remove all its content. Press (Y/N)\n")
         if (command == 'Y'):
             shutil.rmtree(output_folder)
         else:
             exit()
     os.makedirs(output_folder)
 
-    print('Lieke: line 377')
 
     # STEP 2 : Create an instance of the Stroopwafel class
-    sw_object = sw.Stroopwafel(TOTAL_NUM_SYSTEMS, NUM_CPU_CORES, NUM_SYSTEMS_PER_RUN, output_folder, output_filename,
-                               debug=debug, run_on_helios=run_on_hpc, mc_only=mc_only)
+    sw_object = sw.Stroopwafel(TOTAL_NUM_SYSTEMS, NUM_CPU_CORES, NUM_SYSTEMS_PER_RUN, output_folder, output_filename, debug = debug, run_on_helios = run_on_hpc, mc_only = mc_only)
 
-
-    print('Lieke: line 384')
 
     # STEP 3: Initialize the stroopwafel object with the user defined functions and create dimensions and initial distribution
     dimensions = create_dimensions()
-    sw_object.initialize(dimensions, interesting_systems, configure_code_run, rejected_systems,
-                         update_properties_method=update_properties)
+    sw_object.initialize(dimensions, interesting_systems, configure_code_run, rejected_systems, update_properties_method = update_properties)
 
-    print('Lieke: line 391')
 
     intial_pdf = distributions.InitialDistribution(dimensions)
     # STEP 4: Run the 4 phases of stroopwafel
-    sw_object.explore(intial_pdf)  # Pass in the initial distribution for exploration phase
-    sw_object.adapt(
-        n_dimensional_distribution_type=distributions.Gaussian)  # Adaptation phase, tell stroopwafel what kind of distribution you would like to create instrumental distributions
-    
-    print('Lieke: line 399')
-
+    sw_object.explore(intial_pdf) #Pass in the initial distribution for exploration phase
+    sw_object.adapt(n_dimensional_distribution_type = distributions.Gaussian) #Adaptaion phase, tell stroopwafel what kind of distribution you would like to create instrumental distributions
     ## Do selection effects
     selection_effects(sw)
-    sw_object.refine()  # Stroopwafel will draw samples from the adapted distributions
-    sw_object.postprocess(distributions.Gaussian,
-                          only_hits=False)  # Run it to create weights, if you want only hits in the output, then make only_hits = True
-
-    print('Lieke: line 407')
-
+    sw_object.refine() #Stroopwafel will draw samples from the adapted distributions
+    sw_object.postprocess(distributions.Gaussian, only_hits = False) #Run it to create weights, if you want only hits in the output, then make only_hits = True
 
     end_time = time.time()
-    print("Total running time = %d seconds" % (end_time - start_time))
-
+    print ("Total running time = %d seconds" %(end_time - start_time))
