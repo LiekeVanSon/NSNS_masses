@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-
-import os, sys
+import h5py as h5
+import os
 import pandas as pd
 import shutil
 import time
@@ -38,6 +38,7 @@ run_on_hpc = False                  # Run on slurm based cluster HPC
 
 output_filename = 'samples.csv'     # output filename for the stroopwafel samples
 debug = False                       # show COMPAS output/errors
+hdf5 = True
 
 def create_dimensions():
     """
@@ -48,7 +49,7 @@ def create_dimensions():
     OUT:
         As Output, this should return a list containing all the instances of Dimension class.
     """
-    m1 = classes.Dimension('Mass_1', 5, 50, sampler.kroupa, prior.kroupa)
+    m1 = classes.Dimension('Mass_1', 30, 150, sampler.kroupa, prior.kroupa) #Lieke sampling form very high masses to enforce interesting systems
     q = classes.Dimension('q', 0.1, 1, sampler.uniform, prior.uniform, should_print = False)
     a = classes.Dimension('Separation', .01, 1000, sampler.flat_in_log, prior.flat_in_log)
     #kick_velocity_random_1 = classes.Dimension('Kick_Velocity_Random_1', 0, 1, sampler.uniform, prior.uniform)
@@ -92,9 +93,6 @@ def update_properties(locations, dimensions):
 #################################################################################
 
 
-
-
-
 def configure_code_run(batch):
     """
     This function tells stroopwafel what program to run, along with its arguments.
@@ -118,6 +116,40 @@ def configure_code_run(batch):
     batch['output_container'] = output_container
     return compas_args
 
+# def interesting_systems(batch):
+#     """
+#     This is a mandatory function, it tells stroopwafel what an interesting system is. User is free to define whatever looks interesting to them.
+#     IN:
+#         batch (dict): As input you will be given the current batch which just finished its execution. You can take in all the keys you defined in the configure_code_run method above
+#     OUT:
+#         Number of interesting systems
+#         In the below example, I define all the NSs as interesting, so I read the files, get the SEED from the system_params file and define the key is_hit in the end for all interesting systems 
+#     """
+#     try:
+#         folder = os.path.join(output_folder, batch['output_container'])
+#         shutil.move(batch['grid_filename'], folder + '/grid_' + str(batch['number']) + '.csv')
+#         system_parameters = pd.read_csv(folder + '/BSE_System_Parameters.csv', skiprows = 2)
+#         system_parameters.rename(columns = lambda x: x.strip(), inplace = True)
+#         seeds = system_parameters['SEED']
+#         for index, sample in enumerate(batch['samples']):
+#             seed = seeds[index]
+#             sample.properties['SEED'] = seed
+#             sample.properties['is_hit'] = 0
+#             sample.properties['batch'] = batch['number']
+#         double_compact_objects = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
+#         double_compact_objects.rename(columns = lambda x: x.strip(), inplace = True)
+#         #Generally, this is the line you would want to change.
+#         dns = double_compact_objects[np.logical_and(double_compact_objects['Merges_Hubble_Time'] == 1, \
+#             np.logical_and(double_compact_objects['Stellar_Type_1'] == 14, double_compact_objects['Stellar_Type_2'] == 14))]
+#         interesting_systems_seeds = set(dns['SEED'])
+#         for sample in batch['samples']:
+#             if sample.properties['SEED'] in interesting_systems_seeds:
+#                 sample.properties['is_hit'] = 1
+#         return len(dns)
+#     except IOError as error:
+#         return 0
+    
+
 def interesting_systems(batch):
     """
     This is a mandatory function, it tells stroopwafel what an interesting system is. User is free to define whatever looks interesting to them.
@@ -129,28 +161,84 @@ def interesting_systems(batch):
     """
     try:
         folder = os.path.join(output_folder, batch['output_container'])
-        shutil.move(batch['grid_filename'], folder + '/grid_' + str(batch['number']) + '.csv')
-        system_parameters = pd.read_csv(folder + '/BSE_System_Parameters.csv', skiprows = 2)
-        system_parameters.rename(columns = lambda x: x.strip(), inplace = True)
-        seeds = system_parameters['SEED']
+        #shutil.move(batch['grid_filename'], folder + '/grid_' + str(batch['number']) + '.csv')
+        # First try to find the csv file
+        if not hdf5:
+            print('Lieke: you should default back here')
+            system_parameters = pd.read_csv(folder + '/BSE_System_Parameters.csv', skiprows = 2)
+            system_parameters.rename(columns = lambda x: x.strip(), inplace = True)
+            seeds = system_parameters['SEED']
+            double_compact_objects = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
+            double_compact_objects.rename(columns = lambda x: x.strip(), inplace = True)
+        else:
+            # Check for hdf5 file
+            print('Lieke: line 146 (suspected hdf5 reading issue)')
+            sfile = h5.File(folder + '/batch_'+ str(batch['number']) +'.h5' ,'r')
+            seeds = sfile['BSE_System_Parameters']['SEED'][:]
         for index, sample in enumerate(batch['samples']):
             seed = seeds[index]
             sample.properties['SEED'] = seed
             sample.properties['is_hit'] = 0
             sample.properties['batch'] = batch['number']
-        double_compact_objects = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
-        double_compact_objects.rename(columns = lambda x: x.strip(), inplace = True)
+
+        if hdf5:
+            double_compact_objects = sfile['BSE_Double_Compact_Objects']
+
+        st1 = double_compact_objects['Stellar_Type(1)'][:]
+        st2 = double_compact_objects['Stellar_Type(2)'][:]
+        merger_flag = double_compact_objects['Merges_Hubble_Time'][:]    
+        dco_seeds = double_compact_objects['SEED'][:]
+
         #Generally, this is the line you would want to change.
-        dns = double_compact_objects[np.logical_and(double_compact_objects['Merges_Hubble_Time'] == 1, \
-            np.logical_and(double_compact_objects['Stellar_Type_1'] == 14, double_compact_objects['Stellar_Type_2'] == 14))]
-        interesting_systems_seeds = set(dns['SEED'])
-        for sample in batch['samples']:
+        if sys_int == 'BBH':
+            dco_mask = np.logical_and(st1 == 14, st2 == 14)
+        if sys_int == 'DNS':
+            dco_mask = np.logical_and(st1 == 13, st2 == 13)
+        if sys_int == 'BHNS':
+            dco_mask = np.logical_and(st1 == 14, st2 == 13) | np.logical_and(st1 == 13, st2 == 14)
+        merge_mask = merger_flag == 1
+        dns_mask = np.logical_and(merge_mask, dco_mask)
+
+        # Lieke: select systems of interest
+        interesting_systems_seeds = set(dco_seeds[dns_mask])
+        for index, sample in enumerate(batch['samples']):
             if sample.properties['SEED'] in interesting_systems_seeds:
                 sample.properties['is_hit'] = 1
-        return len(dns)
+
+        # If you were working with an hdf5 file, make sure to close it again
+        if hdf5:
+            sfile.close()
+
+        return sum(dns_mask) #len(dns)
+
+    # You probably had no DCO's in your batch
     except IOError as error:
+        print('You ran into an error, ', error)
         return 0
 
+
+# def selection_effects(sw):
+#     """
+#     This is not a mandatory function, it was written to support selection effects
+#     Fills in selection effects for each of the distributions
+#     IN:
+#         sw (Stroopwafel) : Stroopwafel object
+#     """
+#     if hasattr(sw, 'adapted_distributions'):
+#         biased_masses = []
+#         rows = []
+#         for distribution in sw.adapted_distributions:
+#             folder = os.path.join(output_folder, 'batch_' + str(int(distribution.mean.properties['batch'])))
+#             dco_file = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
+#             dco_file.rename(columns = lambda x: x.strip(), inplace = True)
+#             row = dco_file.loc[dco_file['SEED'] == distribution.mean.properties['SEED']]
+#             rows.append([row.iloc[0]['Mass_1'], row.iloc[0]['Mass_2']])
+#             biased_masses.append(np.power(max(rows[-1]), 2.2))
+#         # update the weights
+#         mean = np.mean(biased_masses)
+#         for index, distribution in enumerate(sw.adapted_distributions):
+#             distribution.biased_weight = np.power(max(rows[index]), 2.2) / mean
+    
 def selection_effects(sw):
     """
     This is not a mandatory function, it was written to support selection effects
@@ -163,15 +251,22 @@ def selection_effects(sw):
         rows = []
         for distribution in sw.adapted_distributions:
             folder = os.path.join(output_folder, 'batch_' + str(int(distribution.mean.properties['batch'])))
-            dco_file = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
-            dco_file.rename(columns = lambda x: x.strip(), inplace = True)
-            row = dco_file.loc[dco_file['SEED'] == distribution.mean.properties['SEED']]
-            rows.append([row.iloc[0]['Mass_1'], row.iloc[0]['Mass_2']])
+            try:
+                dco_file = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
+                dco_file.rename(columns = lambda x: x.strip(), inplace = True)
+            except:
+                sfile = h5.File(folder + '/batch_'+ str(batch['number']) +'.h5' ,'r')
+                dco_file = sfile['BSE_Double_Compact_Objects']
+                sfile.close()
+
+            row = dco_file.loc[dco_file['SEED'][:] == distribution.mean.properties['SEED']]
+            rows.append([row.iloc[0]['Mass(1)'], row.iloc[0]['Mass(2)']])
             biased_masses.append(np.power(max(rows[-1]), 2.2))
         # update the weights
         mean = np.mean(biased_masses)
         for index, distribution in enumerate(sw.adapted_distributions):
             distribution.biased_weight = np.power(max(rows[index]), 2.2) / mean
+
 
 def rejected_systems(locations, dimensions):
     """
@@ -259,11 +354,11 @@ if __name__ == '__main__':
 
     print("Output folder is: ", output_folder)
     if os.path.exists(output_folder):
-        command = input ("The output folder already exists. If you continue, I will remove all its content. Press (Y/N)\n")
-        if (command == 'Y'):
-            shutil.rmtree(output_folder)
-        else:
-            exit()
+        #command = input ("The output folder already exists. If you continue, I will remove all its content. Press (Y/N)\n")
+        #if (command == 'Y'):
+        shutil.rmtree(output_folder)
+        #else:
+        #    exit()
     os.makedirs(output_folder)
 
 
@@ -275,11 +370,12 @@ if __name__ == '__main__':
     dimensions = create_dimensions()
     sw_object.initialize(dimensions, interesting_systems, configure_code_run, rejected_systems, update_properties_method = update_properties)
 
-
     intial_pdf = distributions.InitialDistribution(dimensions)
+
     # STEP 4: Run the 4 phases of stroopwafel
     sw_object.explore(intial_pdf) #Pass in the initial distribution for exploration phase
     sw_object.adapt(n_dimensional_distribution_type = distributions.Gaussian) #Adaptaion phase, tell stroopwafel what kind of distribution you would like to create instrumental distributions
+
     ## Do selection effects
     selection_effects(sw)
     sw_object.refine() #Stroopwafel will draw samples from the adapted distributions

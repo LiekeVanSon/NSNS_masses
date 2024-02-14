@@ -22,17 +22,17 @@ import argparse
 
 
 ### Include options from local pythonSubmit file      
-usePythonSubmit = True #If false, use stroopwafel defaults
+userunSubmit = False #If false, use stroopwafel defaults
 
 ### Set default stroopwafel inputs - these are overwritten by any command-line arguments
 
 compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS')   # Location of the executable      # Note: overrides pythonSubmit value
-num_systems = int(1e2)                    # Number of binary systems to evolve                                              # Note: overrides pythonSubmit value
+num_systems = int(1e3)                    # Number of binary systems to evolve                                              # Note: overrides pythonSubmit value
 output_folder = home_dir + '/ceph/CompasOutput/v02.41.06/test'           # Location of output folder (relative to cwd)                                     # Note: overrides pythonSubmit value
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides pythonSubmit value
 
-num_cores = 10                        # Number of cores to parallelize over 
-num_per_core = int(1e4)               # Number of binaries per batch
+num_cores = 4                       # Number of cores to parallelize over 
+num_per_core = int(250)               # Number of binaries per batch
 mc_only = True                      # Exclude adaptive importance sampling (currently not implemented, leave set to True)
 run_on_hpc = True                    # Run on slurm based cluster HPC
 
@@ -53,7 +53,7 @@ def create_dimensions():
     OUT:
         As Output, this should return a list containing all the instances of Dimension class.
     """
-    m1 = classes.Dimension('--initial-mass-1', 10, 150, sampler.kroupa, prior.kroupa)
+    m1 = classes.Dimension('--initial-mass-1', 50, 150, sampler.kroupa, prior.kroupa) #Lieke sampling form very high masses to enforce interesting systems
     q = classes.Dimension('q', 0.01, 1, sampler.uniform, prior.uniform, should_print = False)
     a = classes.Dimension('--semi-major-axis', .01, 1000, sampler.flat_in_log, prior.flat_in_log)
     #kick_magnitude_1 = classes.Dimension('--kick-magnitude-1', 0, 500, sampler.uniform, prior.uniform)
@@ -276,14 +276,16 @@ if __name__ == '__main__':
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()
     commandOptions.update({'--output-path' : output_folder}) 
+    commandOptions.update({'--logfile-delimiter' : 'COMMA'})  # overriden if there is a runSubmit + compas ConfigDefault.yaml
 
-    # Over-ride with pythonSubmit parameters, if desired
-    if usePythonSubmit:
+    # Over-ride with runSubmit + compasConfigDefault.yaml parameters, if desired
+    if userunSubmit:
         try:
-            from pythonSubmit import pythonProgramOptions
-            programOptions = pythonProgramOptions()
-            pySubOptions = programOptions.generateCommandLineOptionsDict()
+            from runSubmit import pythonProgramOptions
+            programOptions = pythonProgramOptions()   # Call the programoption class from runSubmit
+            pySubOptions   = programOptions.command   # Get the dict from pythonProgramOptions
 
+            # Continue to work from the dict, by edditing SW related options
             # Remove extraneous options
             pySubOptions.pop('compas_executable', None)
             pySubOptions.pop('--grid', None)
@@ -295,8 +297,8 @@ if __name__ == '__main__':
             commandOptions.update(pySubOptions)
 
         except:
-            print("Invalid pythonSubmit file, using default stroopwafel options")
-            usePythonSubmit = False
+            print("Invalid runSubmit + compas ConfigDefault.yaml file, using default stroopwafel options")
+            userunSubmit = False
     
 
     print("Output folder is: ", output_folder)
