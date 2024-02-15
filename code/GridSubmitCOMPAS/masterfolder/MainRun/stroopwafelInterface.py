@@ -340,7 +340,7 @@ if __name__ == '__main__':
     commandOptions = dict()
     commandOptions.update({'--output-path': output_folder})
     commandOptions.update(
-        {'--logfile-delimiter': 'COMMA'})  # overridden if there is a runSubmit + compas ConfigDefault.yaml
+        {'--logfile-type': 'CSV'})  # overridden if there is a runSubmit + compas ConfigDefault.yaml
 
     print('Lieke: line 341')
 

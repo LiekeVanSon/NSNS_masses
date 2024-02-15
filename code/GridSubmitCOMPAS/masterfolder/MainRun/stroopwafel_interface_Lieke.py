@@ -42,7 +42,7 @@ hdf5 = True
 
 
 ### Default options for interesting systems when using AIS: ['BBH', 'DNS', 'BHNS']
-sys_int = 'BBH'
+sys_int = 'DNS'
 
 def create_dimensions():
     """
@@ -53,16 +53,20 @@ def create_dimensions():
     OUT:
         As Output, this should return a list containing all the instances of Dimension class.
     """
-    m1 = classes.Dimension('--initial-mass-1', 50, 150, sampler.kroupa, prior.kroupa) #Lieke sampling form very high masses to enforce interesting systems
+    m1 = classes.Dimension('--initial-mass-1', 10, 150, sampler.kroupa, prior.kroupa) #Lieke sampling form higher masses to enforce interesting systems
     q = classes.Dimension('q', 0.01, 1, sampler.uniform, prior.uniform, should_print = False)
     a = classes.Dimension('--semi-major-axis', .01, 1000, sampler.flat_in_log, prior.flat_in_log)
-    #kick_magnitude_1 = classes.Dimension('--kick-magnitude-1', 0, 500, sampler.uniform, prior.uniform)
-    #kick_theta_1 = classes.Dimension('--kick-theta-1', -np.pi / 2, np.pi / 2, sampler.uniform_in_cosine, prior.uniform_in_cosine)
-    #kick_phi_1 = classes.Dimension('--kick-phi-1', 0, 2 * np.pi, sampler.uniform, prior.uniform)
-    #kick_magnitude_2 = classes.Dimension('--kick-magnitude-2', 0, 500, sampler.uniform, prior.uniform)
-    #kick_theta_2 = classes.Dimension('--kick-theta-2', -np.pi / 2, np.pi / 2, sampler.uniform_in_cosine, prior.uniform_in_cosine)
-    #kick_phi_2 = classes.Dimension('--kick-phi-2', 0, 2 * np.pi, sampler.uniform, prior.uniform)
-    return [m1, q, a]#, kick_magnitude_1, kick_theta_1, kick_phi_1, kick_magnitude_2, kick_theta_2, kick_phi_2]
+    return [m1, q, a]
+
+
+#kick_magnitude_1 = classes.Dimension('--kick-magnitude-1', 0, 500, sampler.uniform, prior.uniform)
+#kick_theta_1 = classes.Dimension('--kick-theta-1', -np.pi / 2, np.pi / 2, sampler.uniform_in_cosine, prior.uniform_in_cosine)
+#kick_phi_1 = classes.Dimension('--kick-phi-1', 0, 2 * np.pi, sampler.uniform, prior.uniform)
+#kick_magnitude_2 = classes.Dimension('--kick-magnitude-2', 0, 500, sampler.uniform, prior.uniform)
+#kick_theta_2 = classes.Dimension('--kick-theta-2', -np.pi / 2, np.pi / 2, sampler.uniform_in_cosine, prior.uniform_in_cosine)
+#kick_phi_2 = classes.Dimension('--kick-phi-2', 0, 2 * np.pi, sampler.uniform, prior.uniform)
+# return [m1, q, a, kick_magnitude_1, kick_theta_1, kick_phi_1, kick_magnitude_2, kick_theta_2, kick_phi_2]
+
 
 def update_properties(locations, dimensions):
     """
@@ -120,6 +124,7 @@ def configure_code_run(batch):
         compas_args.extend(params.split("="))
     batch['grid_filename'] = grid_filename
     batch['output_container'] = output_container
+
     return compas_args
 
 def interesting_systems(batch):
@@ -129,8 +134,10 @@ def interesting_systems(batch):
         batch (dict): As input you will be given the current batch which just finished its execution. You can take in all the keys you defined in the configure_code_run method above
     OUT:
         Number of interesting systems
-        In the below example, I define all the NSs as interesting, so I read the files, get the SEED from the system_params file and define the key is_hit in the end for all interesting systems 
+        In the below example,  DNSs are defined as interesting, so I read the files, get the SEED from the system_params file and define the key is_hit in the end for all interesting systems 
     """
+    print('Lieke: ', batch.keys())
+    
     try:
         folder = os.path.join(output_folder, batch['output_container'])
         #shutil.move(batch['grid_filename'], folder + '/grid_' + str(batch['number']) + '.csv')
@@ -183,7 +190,7 @@ def interesting_systems(batch):
 
     # You probably had no DCO's in your batch
     except IOError as error:
-        print('You ran into an error, ', error)
+        print('You ran into a problem in interesting_systems(batch) (maybe there were no DCOs in your batch?)' , error)
         return 0
 
 def selection_effects(sw):
@@ -276,7 +283,7 @@ if __name__ == '__main__':
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()
     commandOptions.update({'--output-path' : output_folder}) 
-    commandOptions.update({'--logfile-delimiter' : 'COMMA'})  # overriden if there is a runSubmit + compas ConfigDefault.yaml
+    commandOptions.update({'--logfile-type' : 'CSV'})  # overriden if there is a runSubmit + compas ConfigDefault.yaml
 
     # Over-ride with runSubmit + compasConfigDefault.yaml parameters, if desired
     if userunSubmit:

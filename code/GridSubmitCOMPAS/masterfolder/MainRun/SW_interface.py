@@ -327,7 +327,7 @@ if __name__ == '__main__':
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()
     commandOptions.update({'--output-path' : output_folder}) 
-    commandOptions.update({'--logfile-delimiter' : 'COMMA'})  # overriden if there is a runSubmit + compas ConfigDefault.yaml
+    commandOptions.update({'--logfile-type' : 'CSV'})  # overriden if there is a runSubmit + compas ConfigDefault.yaml
 
     # Over-ride with runSubmit + compasConfigDefault.yaml parameters, if desired
     if userunSubmit:
