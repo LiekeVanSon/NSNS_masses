@@ -27,13 +27,13 @@ userunSubmit = False #If false, use stroopwafel defaults
 ### Set default stroopwafel inputs - these are overwritten by any command-line arguments
 
 compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS')   # Location of the executable      # Note: overrides pythonSubmit value
-num_systems = int(1e3)                    # Number of binary systems to evolve                                              # Note: overrides pythonSubmit value
+num_systems = int(3e3)                    # Number of binary systems to evolve                                              # Note: overrides pythonSubmit value
 output_folder = home_dir + '/ceph/CompasOutput/v02.41.06/test'           # Location of output folder (relative to cwd)                                     # Note: overrides pythonSubmit value
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides pythonSubmit value
 
 num_cores = 4                       # Number of cores to parallelize over 
-num_per_core = int(250)               # Number of binaries per batch
-mc_only = True                      # Exclude adaptive importance sampling (currently not implemented, leave set to True)
+num_per_core = int(250)              # Number of binaries per batch
+mc_only = False                      # Exclude adaptive importance sampling (currently not implemented, leave set to True)
 run_on_hpc = True                    # Run on slurm based cluster HPC
 
 output_filename = 'samples.csv'     # output filename for the stroopwafel samples
@@ -41,8 +41,8 @@ debug = True                        # show COMPAS output/errors
 hdf5 = True
 
 
-### Default options for interesting systems when using AIS: ['BBH', 'DNS', 'BHNS']
-sys_int = 'DNS'
+### Default options for interesting systems when using AIS: ['BBH', 'DNS', 'BHNS', 'AnyDCO' ]
+sys_int = 'AnyDCO'
 
 def create_dimensions():
     """
@@ -99,10 +99,6 @@ def update_properties(locations, dimensions):
 #################################################################################
 #################################################################################
 
-
-
-
-
 def configure_code_run(batch):
     """
     This function tells stroopwafel what program to run, along with its arguments.
@@ -135,9 +131,7 @@ def interesting_systems(batch):
     OUT:
         Number of interesting systems
         In the below example,  DNSs are defined as interesting, so I read the files, get the SEED from the system_params file and define the key is_hit in the end for all interesting systems 
-    """
-    print('Lieke: ', batch.keys())
-    
+    """    
     try:
         folder = os.path.join(output_folder, batch['output_container'])
         #shutil.move(batch['grid_filename'], folder + '/grid_' + str(batch['number']) + '.csv')
@@ -173,6 +167,9 @@ def interesting_systems(batch):
             dco_mask = np.logical_and(st1 == 13, st2 == 13)
         if sys_int == 'BHNS':
             dco_mask = np.logical_and(st1 == 14, st2 == 13) | np.logical_and(st1 == 13, st2 == 14)
+        if sys_int == 'AnyDCO':
+            dco_mask = np.logical_and(np.logical_or(st1 == 13, st1 == 14), np.logical_or(st2 == 13, st2 == 14) )
+
         merge_mask = merger_flag == 1
         dns_mask = np.logical_and(merge_mask, dco_mask)
 
@@ -190,7 +187,8 @@ def interesting_systems(batch):
 
     # You probably had no DCO's in your batch
     except IOError as error:
-        print('You ran into a problem in interesting_systems(batch) (maybe there were no DCOs in your batch?)' , error)
+        print('You ran into an error during in interesting_systems(batch)', error,
+              '\n It could be there were no DCOs in your batch, or there was an error in your COMPAS run (check slurms/batch_x.err)' )
         return 0
 
 def selection_effects(sw):
@@ -283,7 +281,7 @@ if __name__ == '__main__':
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()
     commandOptions.update({'--output-path' : output_folder}) 
-    commandOptions.update({'--logfile-type' : 'CSV'})  # overriden if there is a runSubmit + compas ConfigDefault.yaml
+    commandOptions.update({'--logfile-type' : 'HDF5'})  # overriden if there is a runSubmit + compas ConfigDefault.yaml
 
     # Over-ride with runSubmit + compasConfigDefault.yaml parameters, if desired
     if userunSubmit:
@@ -330,12 +328,19 @@ if __name__ == '__main__':
 
     intial_pdf = distributions.InitialDistribution(dimensions)
     # STEP 4: Run the 4 phases of stroopwafel
-    sw_object.explore(intial_pdf) #Pass in the initial distribution for exploration phase
-    sw_object.adapt(n_dimensional_distribution_type = distributions.Gaussian) #Adaptaion phase, tell stroopwafel what kind of distribution you would like to create instrumental distributions
-    ## Do selection effects
+
+    #4.A: Explore: pass in the initial distribution for exploration phase
+    sw_object.explore(intial_pdf) 
+
+    #4.B: Adaptaion phase, tell stroopwafel what kind of distribution you would like to create instrumental distributions
+    sw_object.adapt(n_dimensional_distribution_type = distributions.Gaussian) 
+    
+    #4.C: Apply selection effects
     #selection_effects(sw)
     sw_object.refine() #Stroopwafel will draw samples from the adapted distributions
-    sw_object.postprocess(distributions.Gaussian, only_hits = False) #Run it to create weights, if you want only hits in the output, then make only_hits = True
+    
+    #4.D: Postprocess, Run it to create weights, if you want only hits in the output, then make only_hits = True
+    sw_object.postprocess(distributions.Gaussian, only_hits = False) 
 
     end_time = time.time()
     print ("Total running time = %d seconds" %(end_time - start_time))

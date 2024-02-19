@@ -374,6 +374,7 @@ if __name__ == '__main__':
 
     # STEP 4: Run the 4 phases of stroopwafel
     sw_object.explore(intial_pdf) #Pass in the initial distribution for exploration phase
+
     sw_object.adapt(n_dimensional_distribution_type = distributions.Gaussian) #Adaptaion phase, tell stroopwafel what kind of distribution you would like to create instrumental distributions
 
     ## Do selection effects
