@@ -23,7 +23,7 @@ module load python
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e6_Fiducial_NSNS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e7_Fiducial_NSNS/'
 
 # Make postProcessing directory and copy scripts
 mkdir -p $data_dir/postProcessing
