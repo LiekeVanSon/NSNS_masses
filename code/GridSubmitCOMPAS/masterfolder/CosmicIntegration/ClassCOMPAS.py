@@ -91,40 +91,52 @@ class COMPASData(object):
         # if the user wants to make RLOF or optimistic CEs
         print("noRLOFafterCEE, pessimistic:", noRLOFafterCEE , pessimistic)
         if noRLOFafterCEE or pessimistic:
-
-            # get the flags and unique seeds from the Common Envelopes file
-            try:
-                ce_seeds = self.get_COMPAS_variables("BSE_Common_Envelopes", "SEED")
-            except:
-                ce_seeds = self.get_COMPAS_variables("CommonEnvelopes", "SEED")
-
-            dco_from_ce = np.in1d(ce_seeds, dco_seeds)
-            dco_ce_seeds = ce_seeds[dco_from_ce]
-
-            # if masking on RLOF, get flag and match seeds to dco seeds
-            if noRLOFafterCEE:
+            try: # Try using the Common envelope group
+                # get the flags and unique seeds from the Common Envelopes file
                 try:
-                    rlof_flag = self.get_COMPAS_variables("BSE_Common_Envelopes", "Immediate_RLOF>CE")[dco_from_ce].astype(bool)
+                    ce_seeds = self.get_COMPAS_variables("BSE_Common_Envelopes", "SEED")
                 except:
-                    print('using system params')
-                    rlof_flag = self.get_COMPAS_variables("CommonEnvelopes", "Immediate_RLOF>CE")[dco_from_ce].astype(bool)
+                    ce_seeds = self.get_COMPAS_variables("CommonEnvelopes", "SEED")
 
-                rlof_seeds    = np.unique(dco_ce_seeds[rlof_flag.astype(bool)])
-                wel_rlof_mask = np.in1d(dco_seeds, rlof_seeds)
-                rlof_mask     = np.logical_not(wel_rlof_mask)
+                dco_from_ce = np.in1d(ce_seeds, dco_seeds)
+                dco_ce_seeds = ce_seeds[dco_from_ce]
 
-            else:
-                print('youre just setting rlof_mask to True')
-                rlof_mask = np.repeat(True, len(dco_seeds))
+                # if masking on RLOF, get flag and match seeds to dco seeds
+                if noRLOFafterCEE:
+                    try:
+                        rlof_flag = self.get_COMPAS_variables("BSE_Common_Envelopes", "Immediate_RLOF>CE")[dco_from_ce].astype(bool)
+                    except:
+                        print('using system params')
+                        rlof_flag = self.get_COMPAS_variables("CommonEnvelopes", "Immediate_RLOF>CE")[dco_from_ce].astype(bool)
+
+                    rlof_seeds    = np.unique(dco_ce_seeds[rlof_flag.astype(bool)])
+                    wel_rlof_mask = np.in1d(dco_seeds, rlof_seeds)
+                    rlof_mask     = np.logical_not(wel_rlof_mask)
+
+                else:
+                    print('youre just setting rlof_mask to True')
+                    rlof_mask = np.repeat(True, len(dco_seeds))
+                    
+            except: # Except use the BSE_Double_Compact_Objects 
+                rlof_flag     = self.get_COMPAS_variables("BSE_Double_Compact_Objects", "Immediate_RLOF>CE").astype(bool)
+                rlof_mask     = np.logical_not(rlof_flag)
+
 
             # if masking on pessimistic CE, get flag and match seeds to dco seeds
             if pessimistic:
-                try:
-                    pessimistic_flag = self.get_COMPAS_variables("BSE_Common_Envelopes", "Optimistic_CE")[dco_from_ce].astype(bool)
-                except:
-                    pessimistic_flag = self.get_COMPAS_variables("CommonEnvelopes", "Optimistic_CE")[dco_from_ce].astype(bool)
-                pessimistic_seeds = np.unique(dco_ce_seeds[pessimistic_flag])
-                pessimistic_mask = np.logical_not(np.in1d(dco_seeds, pessimistic_seeds))
+                try: # Try using the Common envelope group
+                    try:
+                        pessimistic_flag = self.get_COMPAS_variables("BSE_Common_Envelopes", "Optimistic_CE")[dco_from_ce].astype(bool)
+                    except:
+                        pessimistic_flag = self.get_COMPAS_variables("CommonEnvelopes", "Optimistic_CE")[dco_from_ce].astype(bool)
+                    pessimistic_seeds = np.unique(dco_ce_seeds[pessimistic_flag])
+                    pessimistic_mask = np.logical_not(np.in1d(dco_seeds, pessimistic_seeds))
+                except: # Except use the BSE_Double_Compact_Objects
+                    pessimistic_flag    = self.get_COMPAS_variables("BSE_Double_Compact_Objects", "Optimistic_CE").astype(bool)
+                    pessimistic_mask    = np.logical_not(pessimistic_flag)
+
+                    
+            # You are not masking for immediate RLOF post CE or HG donor CE       
             else:
                 print('youre just setting pessimistic_mask to True')
                 pessimistic_mask = np.repeat(True, len(dco_seeds))
@@ -136,10 +148,10 @@ class COMPASData(object):
         # create a mask for each dco type supplied
         self.DCOmask = type_masks[types] * hubble_mask * rlof_mask * pessimistic_mask
         self.BBHmask = type_masks["BBH"] * hubble_mask * rlof_mask * pessimistic_mask
-        print("sum(type_masks[BBH]) {}, sum(hubble_mask) {}, sum(rlof_mask) {}, sum(pessimistic_mask) {}".format(sum(type_masks["BBH"]) , sum(hubble_mask) , sum(rlof_mask) , sum(pessimistic_mask)) )
-
         self.BHNSmask = type_masks["BHNS"] * hubble_mask * rlof_mask * pessimistic_mask
         self.DNSmask = type_masks["BNS"] * hubble_mask * rlof_mask * pessimistic_mask
+        print(f"sum(type_masks[BBH]) {sum(type_masks['BBH'])} sum(type_masks[BHNS]) {sum(type_masks['BHNS'])} sum(type_masks[BNS]) {sum(type_masks['BNS'])} sum(hubble_mask) {sum(hubble_mask)} ")
+
         self.allTypesMask = type_masks["all"] * hubble_mask * rlof_mask * pessimistic_mask
         self.optimisticmask = pessimistic_mask
 

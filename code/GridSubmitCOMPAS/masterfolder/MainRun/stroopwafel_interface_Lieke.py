@@ -27,12 +27,14 @@ userunSubmit = False #If false, use stroopwafel defaults
 ### Set default stroopwafel inputs - these are overwritten by any command-line arguments
 
 compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS')   # Location of the executable      # Note: overrides pythonSubmit value
-num_systems = int(1e5)                    # Number of binary systems to evolve                                              # Note: overrides pythonSubmit value
-output_folder = home_dir + '/ceph/CompasOutput/v02.41.06/N1e5_Fiducial'           # Location of output folder (relative to cwd)                                     # Note: overrides pythonSubmit value
+
+# 1e6 sytems w. 20 cores and 1e4 systems per core takes ~1 hour)
+num_systems = int(1e6)              # Number of binary systems to evolve  # Note: overrides pythonSubmit value
+output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e6_Fiducial_NSNS//MainRun/'
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides pythonSubmit value
 
-num_cores = 10                       # Number of cores to parallelize over 
-num_per_core = int(1e3)              # Number of binaries per batch
+num_cores = 20                       # Number of cores to parallelize over 
+num_per_core = int(1e4)              # Number of binaries per batch
 mc_only = False                      # Exclude adaptive importance sampling (currently not implemented, leave set to True)
 run_on_hpc = True                    # Run on slurm based cluster HPC
 
@@ -42,7 +44,7 @@ hdf5 = True
 
 
 ### Default options for interesting systems when using AIS: ['BBH', 'DNS', 'BHNS', 'AnyDCO' ]
-sys_int = 'AnyDCO'
+sys_int = 'DNS'
 
 def create_dimensions():
     """
@@ -133,7 +135,6 @@ def interesting_systems(batch):
             # Check for hdf5 file
             sfile = h5.File(folder + '/batch_'+ str(batch['number']) +'.h5' ,'r')
             seeds = sfile['BSE_System_Parameters']['SEED'][:]
-            print('Lieke: You opened sfile sucessfully', sfile.keys()) 
         for index, sample in enumerate(batch['samples']):
             seed = seeds[index]
             sample.properties['SEED'] = seed
@@ -141,7 +142,6 @@ def interesting_systems(batch):
             sample.properties['batch'] = batch['number']
 
         if hdf5:
-            print('Lieke: but for some skjfshf reason it then dies here? ')
             double_compact_objects = sfile['BSE_Double_Compact_Objects']
 
         st1 = double_compact_objects['Stellar_Type(1)'][:]
@@ -265,7 +265,7 @@ if __name__ == '__main__':
     run_on_hpc = namespace.run_on_hpc #If True, it will run on a clustered system helios, rather than your pc
     mc_only = namespace.mc_only # If you dont want to do the refinement phase and just do random mc exploration
     output_filename = namespace.output_filename #The name of the output file
-    output_folder = os.path.join(os.getcwd(), namespace.output_folder)
+    output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e6_Fiducial_NSNS//MainRun/'
 
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()

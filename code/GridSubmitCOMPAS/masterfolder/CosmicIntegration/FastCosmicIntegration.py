@@ -4,7 +4,7 @@ import os
 import time
 import matplotlib.pyplot as plt
 from astropy.cosmology import WMAP9 as cosmology
-import scipy
+# import scipy
 from scipy.interpolate import interp1d
 from scipy.stats import norm as NormDist
 import ClassCOMPAS
@@ -472,7 +472,7 @@ def find_detection_rate(path, filename="COMPAS_Output.h5", dco_type="BBH", weigh
     return detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes
 
 
-def append_rates(path, filename, detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes, n_redshifts_detection,
+def append_rates(path, outfilename, detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes, n_redshifts_detection,
     maxz=5., sensitivity="O1", dco_type="BHBH", mu0=0.035, muz=-0.23, sigma0=0.39, sigmaz=0., alpha=0., aSF = 0.01, bSF = 2.77, cSF = 2.90, dSF = 4.70,
     append_binned_by_z = False, redshift_binsize=0.1):
     """
@@ -480,7 +480,7 @@ def append_rates(path, filename, detection_rate, formation_rate, merger_rate, re
 
         Args:
             path                   --> [string] Path to the COMPAS file that contains the output
-            filename               --> [string] Name of the COMPAS file
+            outfilename            --> [string] Name of the hdf5 file that you want to write your rates to
             detection_rate         --> [2D float array] Detection rate for each binary at each redshift in 1/yr
             formation_rate         --> [2D float array] Formation rate for each binary at each redshift in 1/yr/Gpc^3
             merger_rate            --> [2D float array] Merger rate for each binary at each redshift in 1/yr/Gpc^3
@@ -512,21 +512,32 @@ def append_rates(path, filename, detection_rate, formation_rate, merger_rate, re
     print('path', path)
 
     #################################################
-    #Open hdf5 file that we will write on
-    print('filename', filename)
-    with h5.File(path +'/'+ filename, 'r+') as h_new:
+    #Open hdf5 file that we will read from
+    print('path', path)
+    with h5.File(path , 'r') as f_COMPAS:
+        
+        # Would you like to write your rates to a different file? 
+        if path == outfilename:
+            raise ValueError('you cant append directly to the input data, will change outfilename to %s'%(outfilename)+'_1')
+            outfilename = outfilename+'_1'
+
+        #'you want to save your output to a different file!'
+        if os.path.exists(outfilename):
+            print('file', outfilename, 'exists!! You will remove it')
+            os.remove(outfilename)
+            
+        print('writing to ', outfilename)
+        h_new = h5.File(outfilename, 'w')
+
         # The rate info is shaped as BSE_Double_Compact_Objects[COMPAS.DCOmask] , len(redshifts)
         try: 
-            DCO             = h_new['BSE_Double_Compact_Objects']#
+            DCO             = f_COMPAS['BSE_Double_Compact_Objects']#
         except:
-            DCO             = h_new['DoubleCompactObjects']#
-
-        print('shape DCO[SEED]', np.shape(DCO['SEED'][()]) )
+            DCO             = f_COMPAS['DoubleCompactObjects']#
 
         #################################################
         # Create a new group where we will store data
         new_rate_group = 'Rates_mu0{}_muz{}_alpha{}_sigma0{}_sigmaz{}_a{}_b{}_c{}_d{}'.format(mu0, muz, alpha, sigma0, sigmaz, aSF, bSF, cSF, dSF)
-        #new_rate_group = 'Rates_mu0{}_muz{}_alpha{}_sigma0{}_sigmaz{}'.format(mu0, muz, alpha, sigma0, sigmaz)
 
         if append_binned_by_z:
             new_rate_group  = new_rate_group + '_zBinned'
@@ -565,17 +576,11 @@ def append_rates(path, filename, detection_rate, formation_rate, merger_rate, re
             fine_shell_volumes = np.diff(fine_volumes)
             fine_shell_volumes = np.append(fine_shell_volumes, fine_shell_volumes[-1])
 
-
             # Use digitize to assign the redshifts to a bin (detection list is shorter)
             # digitized     = np.digitize(redshifts, redshift_bins)
             digitized_det = np.digitize(redshifts[:n_redshifts_detection], redshift_bins)
 
-            # create bools of redshifts 
-            # Bool_list = [np.logical_and(redshifts > redshift_bins[a], redshifts < redshift_bins[a+1]) for a in range(0,len(redshift_bins)-1) ]
-
             # Convert your merger_rate back to 1/yr by multiplying by the fine_shell_volumes
-            # N_dco_in_crude_bin      = (merger_rate[:,digitized == i+1] * fine_shell_volumes[digitized == i+1])
-            # N_dco_in_crude_bin      = (merger_rate[:,Bool_list[i]] * fine_shell_volumes[Bool_list[i]])
             N_dco_in_z_bin      = (merger_rate[:,:] * fine_shell_volumes[:])
             print('fine_shell_volumes', fine_shell_volumes)
 
@@ -593,20 +598,23 @@ def append_rates(path, filename, detection_rate, formation_rate, merger_rate, re
                 print('redshifts[[i*i_per_crude_bin:(i+1)*i_per_crude_bin]]', redshifts[i*i_per_crude_bin:(i+1)*i_per_crude_bin])
 
                 # Sum the number of mergers per year, and divide by the new dz volume to get a density
-                # binned_merger_rate[:,i] = np.sum(N_dco_in_z_bin[:,digitized == i+1], axis = 1)/crude_shell_volumes[i]
                 binned_merger_rate[:,i] = np.sum(N_dco_in_z_bin[:,i*i_per_crude_bin:(i+1)*i_per_crude_bin], axis = 1)/crude_shell_volumes[i]
-
-                # binned_merger_rate[:,i] = np.sum(N_dco_in_z_bin[:,Bool_list[i]], axis = 1)/crude_shell_volumes[i]
-                # binned_merger_rate[:,i] = np.sum(N_dco_in_z_bin, axis = 1)/crude_shell_volumes[i]
-                # binned_merger_rate[:,i]    = np.sum(merger_rate[:, digitized == i+1], axis = 1)
 
                 # only add detected rates for the 'detectable' redshifts
                 if redshift_bins[i] < redshifts[n_redshifts_detection]:
                     # The detection rate was already multiplied by the shell volumes, so we can sum it directly
                     binned_detection_rate[:,i] = np.sum(detection_rate[:, digitized_det == i+1], axis = 1)
-            save_redshifts        = redshift_bins
-            save_merger_rate      = binned_merger_rate
-            save_detection_rate   = binned_detection_rate
+
+            #  To avoid huge filesizes, we don't really wan't All the data, 
+            # so we're going to save up to some redshift
+            z_index = np.digitize(maxz, redshift_bins) -1
+
+            # The detection_rate is a smaller array, make sure you don't go beyond the end
+            detection_index = z_index if z_index < n_redshifts_detection else n_redshifts_detection
+            
+            save_redshifts        = redshift_bins[:z_index]
+            save_merger_rate      = binned_merger_rate[:,:z_index]
+            # save_detection_rate   = binned_detection_rate[:,:detection_index]
 
         else: 
             #  To avoid huge filesizes, we don't really wan't All the data, 
@@ -619,7 +627,7 @@ def append_rates(path, filename, detection_rate, formation_rate, merger_rate, re
             print('You will only save data up to redshift ', maxz, ', i.e. index', z_index)
             save_redshifts        = redshifts[:z_index]
             save_merger_rate      = merger_rate[:,:z_index]
-            save_detection_rate   = detection_rate[:,:detection_index]
+            # save_detection_rate   = detection_rate[:,:detection_index]
 
         print('save_redshifts', save_redshifts)
         print('shape of save_merger_rate ', np.shape(save_merger_rate))
@@ -628,8 +636,10 @@ def append_rates(path, filename, detection_rate, formation_rate, merger_rate, re
         # Write the rates as a seperate dataset
         # re-arrange your list of rate parameters
         DCO_to_rate_mask     = COMPAS.DCOmask #save this bool for easy conversion between BSE_Double_Compact_Objects, and CI weights
-        rate_data_list       = [DCO['SEED'][DCO_to_rate_mask], DCO_to_rate_mask , save_redshifts,  save_merger_rate, merger_rate[:,0], save_detection_rate, Average_SF_mass_needed]
-        rate_list_names      = ['SEED', 'DCOmask', 'redshifts',  'merger_rate','merger_rate_z0', 'detection_rate'+sensitivity, 'Average_SF_mass_needed']
+        rate_data_list       = [DCO['SEED'][DCO_to_rate_mask], DCO_to_rate_mask , save_redshifts,  save_merger_rate]
+        #, merger_rate[:,0], save_detection_rate, Average_SF_mass_needed]
+        rate_list_names      = ['SEED', 'DCOmask', 'redshifts', 'merger_rate']
+        #,'merger_rate_z0', 'detection_rate'+sensitivity, 'Average_SF_mass_needed']
         for i, data in enumerate(rate_data_list):
             print('Adding rate info {} of shape {}'.format(rate_list_names[i], np.shape(data)) )
             # Check if dataset exists, if so, just delete it
@@ -640,7 +650,7 @@ def append_rates(path, filename, detection_rate, formation_rate, merger_rate, re
 
     #Always close your files again ;)
     h_new.close()
-    print( ('Done with append_rates :) your new files are here: %s/%s'%(path,filename)).replace('//', '/') )
+    print( ('Done with append_rates :) your new files are here: %s'%(outfilename)).replace('//', '/') )
 
 
 
@@ -693,7 +703,7 @@ def delete_rates(path, filename, mu0=0.035, muz=-0.23, sigma0=0.39, sigmaz=0., a
 
 
 
-def plot_rates(save_dir, formation_rate, merger_rate, detection_rate, redshifts, chirp_masses, show_plot = False, mu0=0.035, muz=-0.23, sigma0=0.39, sigmaz=0., alpha=0):
+def plot_rates(save_dir, formation_rate, merger_rate, detection_rate, redshifts, chirp_masses, show_plot = False, mu0=0.035, muz=-0.23, sigma0=0.39, sigmaz=0., alpha=0,aSF = 0.02,  bSF = 1.48, cSF = 4.45, dSF = 5.91):
     """
         Show a summary plot of the results, it also returns the summaries that it computes
 
@@ -761,7 +771,7 @@ def plot_rates(save_dir, formation_rate, merger_rate, detection_rate, redshifts,
         ax.tick_params(labelsize=0.9*fs)
 
     # Save and show :)
-    plt.savefig(save_dir +'Rate_Info'+"mu0%s_muz%s_alpha%s_sigma0%s_sigmaz%s"%(mu0,muz,alpha,sigma0, sigmaz)+'.png', bbox_inches='tight') 
+    plt.savefig(save_dir +'Rate_Info'+"mu0%s_muz%s_alpha%s_sigma0%s_sigmaz%s_a%s_b%s_c%s_d%s"%(mu0,muz,alpha,sigma0,sigmaz,aSF, bSF,cSF,dSF)+'.png', bbox_inches='tight') 
     if show_plot:
         plt.show()
     else:
@@ -782,6 +792,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", dest= 'path',  help="Path to the COMPAS file that contains the output",type=str, default = './')
     parser.add_argument("--filename", dest= 'fname',  help="Name of the COMPAS file",type=str, default = "COMPAS_Output.h5")
+    parser.add_argument("--outfname", dest= 'outfname',  help="Name of the output file where you store the rates, default is append to COMPAS output",type=str, default = "COMPAS_Output.h5")
+
     # For what DCO would you like the rate?  options: ALL, BHBH, BHNS NSNS
     parser.add_argument("--dco_type", dest= 'dco_type',  help="Which DCO type you used to calculate rates, one of: ['all', 'BBH', 'BHNS', 'BNS'] ",type=str, default = "BBH")
     parser.add_argument("--weight", dest= 'weight_column',  help="Name of column w AIS sampling weights, i.e. 'mixture_weight'(leave as None for unweighted samples) ",type=str, default = None)
@@ -811,7 +823,7 @@ if __name__ == "__main__":
     parser.add_argument("--cSF", dest= 'cSF',  help="Parameter for shape of SFR(z)",type=float, default=2.90)
     parser.add_argument("--dSF", dest= 'dSF',  help="Parameter for shape of SFR(z)",type=float, default=4.70)
  
-     # Options for the redshift evolution and detector sensitivity
+     # Options for saving your data
     parser.add_argument("--dontAppend", dest= 'append_rates',  help="Prevent the script from appending your rates to the hdf5 file.", action='store_false', default=True)
     parser.add_argument("--BinAppend", dest= 'binned_rates',  help="Append your rates in more crude redshift bins to save space.", action='store_true', default=False)
     parser.add_argument("--redshiftBinSize", dest= 'zBinSize',  help="How big should the crude redshift bins be", type=float, default=0.05)
@@ -836,12 +848,13 @@ if __name__ == "__main__":
     start_append = time.time()
     if args.append_rates:
         n_redshifts_detection = int(args.max_redshift_detection / args.redshift_step)
-        append_rates(args.path, args.fname, detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes, n_redshifts_detection,
+        append_rates(args.path + args.fname, args.outfname, detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes, n_redshifts_detection,
             maxz=args.max_redshift_detection, sensitivity=args.sensitivity, dco_type=args.dco_type, mu0=args.mu0, muz=args.muz, sigma0=args.sigma0, sigmaz=args.sigmaz, alpha=args.alpha,
             aSF = args.aSF,  bSF = args.bSF , cSF = args.cSF , dSF = args.dSF ,
             append_binned_by_z = args.binned_rates, redshift_binsize=args.zBinSize)
 
     # or just delete this group if your hdf5 file is getting too big
+    # !! Make sure to run h5repack from your terminal if you do this!! del doesn't actually free up space
     if args.delete_rates:
         delete_rates(args.path, args.fname, mu0=args.mu0, muz=args.muz, sigma0=args.sigma0, sigmaz=args.sigmaz, alpha=args.alpha, append_binned_by_z=False)
 
@@ -854,7 +867,7 @@ if __name__ == "__main__":
     start_plot = time.time()
     chirp_masses = (COMPAS.mass1*COMPAS.mass2)**(3./5.) / (COMPAS.mass1 + COMPAS.mass2)**(1./5.)
     print('almost finished, just plotting your results now')
-    plot_rates(args.path, formation_rate, merger_rate, detection_rate, redshifts, chirp_masses, show_plot = False, mu0=args.mu0, muz=args.muz, sigma0=args.sigma0, sigmaz=args.sigmaz, alpha=args.alpha)
+    plot_rates(args.path, formation_rate, merger_rate, detection_rate, redshifts, chirp_masses, show_plot = False, mu0=args.mu0, muz=args.muz, sigma0=args.sigma0, sigmaz=args.sigmaz, alpha=args.alpha, aSF = args.aSF,  bSF = args.bSF , cSF = args.cSF , dSF = args.dSF ,)
     end_plot = time.time()
 
     print('CI took ', end_CI - start_CI, 's')

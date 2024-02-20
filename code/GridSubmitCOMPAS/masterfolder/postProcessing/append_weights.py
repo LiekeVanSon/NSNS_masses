@@ -6,7 +6,7 @@ import time
 
 ##################################################################
 ##    Should be Changed by user ##
-Dir      = '../'
+Dir      = '../MainRun/' # ! specific to structure of your directories
 SW_name  = 'samples.csv'
 Raw_name = 'COMPAS_Output.h5' 
 New_name = 'COMPAS_Output_wWeights.h5'

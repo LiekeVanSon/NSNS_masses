@@ -23,7 +23,7 @@ module load python
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir=/mnt/home/lvanson/ceph/CompasOutput/v02.41.06/Test/
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e6_Fiducial_NSNS/'
 
 # Make postProcessing directory and copy scripts
 mkdir -p $data_dir/postProcessing
@@ -41,3 +41,7 @@ python h5copy.py  $data_dir/MainRun/ -r 2 -o $data_dir/MainRun/COMPAS_Output.h5 
 #Run append weight
 python append_weights.py  > $data_dir/postProcessing/append_weights.log
 
+# copy the slurm you used for your run to the output directory
+cp $root_script_dir/slurms/COMPAS_PP.sbatch $data_dir/postProcessing/
+mv $root_script_dir/slurms/COMPAS_PP.err $data_dir/postProcessing/
+mv $root_script_dir/slurms/COMPAS_PP.out $data_dir/postProcessing/
