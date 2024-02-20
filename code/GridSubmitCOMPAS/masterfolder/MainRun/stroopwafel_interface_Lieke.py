@@ -27,12 +27,12 @@ userunSubmit = False #If false, use stroopwafel defaults
 ### Set default stroopwafel inputs - these are overwritten by any command-line arguments
 
 compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS')   # Location of the executable      # Note: overrides pythonSubmit value
-num_systems = int(3e3)                    # Number of binary systems to evolve                                              # Note: overrides pythonSubmit value
-output_folder = home_dir + '/ceph/CompasOutput/v02.41.06/test'           # Location of output folder (relative to cwd)                                     # Note: overrides pythonSubmit value
+num_systems = int(1e5)                    # Number of binary systems to evolve                                              # Note: overrides pythonSubmit value
+output_folder = home_dir + '/ceph/CompasOutput/v02.41.06/N1e5_Fiducial'           # Location of output folder (relative to cwd)                                     # Note: overrides pythonSubmit value
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides pythonSubmit value
 
-num_cores = 4                       # Number of cores to parallelize over 
-num_per_core = int(250)              # Number of binaries per batch
+num_cores = 10                       # Number of cores to parallelize over 
+num_per_core = int(1e3)              # Number of binaries per batch
 mc_only = False                      # Exclude adaptive importance sampling (currently not implemented, leave set to True)
 run_on_hpc = True                    # Run on slurm based cluster HPC
 
@@ -53,19 +53,10 @@ def create_dimensions():
     OUT:
         As Output, this should return a list containing all the instances of Dimension class.
     """
-    m1 = classes.Dimension('--initial-mass-1', 10, 150, sampler.kroupa, prior.kroupa) #Lieke sampling form higher masses to enforce interesting systems
+    m1 = classes.Dimension('--initial-mass-1', 5, 150, sampler.kroupa, prior.kroupa) 
     q = classes.Dimension('q', 0.01, 1, sampler.uniform, prior.uniform, should_print = False)
     a = classes.Dimension('--semi-major-axis', .01, 1000, sampler.flat_in_log, prior.flat_in_log)
     return [m1, q, a]
-
-
-#kick_magnitude_1 = classes.Dimension('--kick-magnitude-1', 0, 500, sampler.uniform, prior.uniform)
-#kick_theta_1 = classes.Dimension('--kick-theta-1', -np.pi / 2, np.pi / 2, sampler.uniform_in_cosine, prior.uniform_in_cosine)
-#kick_phi_1 = classes.Dimension('--kick-phi-1', 0, 2 * np.pi, sampler.uniform, prior.uniform)
-#kick_magnitude_2 = classes.Dimension('--kick-magnitude-2', 0, 500, sampler.uniform, prior.uniform)
-#kick_theta_2 = classes.Dimension('--kick-theta-2', -np.pi / 2, np.pi / 2, sampler.uniform_in_cosine, prior.uniform_in_cosine)
-#kick_phi_2 = classes.Dimension('--kick-phi-2', 0, 2 * np.pi, sampler.uniform, prior.uniform)
-# return [m1, q, a, kick_magnitude_1, kick_theta_1, kick_phi_1, kick_magnitude_2, kick_theta_2, kick_phi_2]
 
 
 def update_properties(locations, dimensions):
@@ -84,11 +75,6 @@ def update_properties(locations, dimensions):
         location.properties['--initial-mass-2'] = location.dimensions[m1] * location.dimensions[q]
         location.properties['--metallicity'] =10**(np.random.uniform(-4, np.log10(0.03)))
         location.properties['--eccentricity'] = 0
-        #location.properties['Kick_Mean_Anomaly_1'] = np.random.uniform(0, 2 * np.pi, 1)[0]
-        #location.properties['Kick_Mean_Anomaly_2'] = np.random.uniform(0, 2 * np.pi, 1)[0]
-
-
-
 
 
 #################################################################################
@@ -114,7 +100,8 @@ def configure_code_run(batch):
     grid_filename = os.path.join(output_folder, 'grid_' + str(batch_num) + '.csv')
     output_container = 'batch_' + str(batch_num)
     random_seed = random_seed_base + batch_num*NUM_SYSTEMS_PER_RUN  # ensure that random numbers are not reused across batches
-    compas_args = [compas_executable, '--grid', grid_filename, '--output-container', output_container, '--random-seed' , random_seed]
+    compas_args = [compas_executable, '--grid', grid_filename, '--output-container', output_container, '--random-seed' , random_seed, '--add-options-to-sysparms', 'NEVER']
+    # '--add-options-to-sysparms' create a whole buch of unnecessary output just because you are running a grid
     [compas_args.extend([key, val]) for key, val in commandOptions.items()]
     for params in extra_params:
         compas_args.extend(params.split("="))
@@ -135,7 +122,7 @@ def interesting_systems(batch):
     try:
         folder = os.path.join(output_folder, batch['output_container'])
         #shutil.move(batch['grid_filename'], folder + '/grid_' + str(batch['number']) + '.csv')
-        # First try to find the csv file
+        # If output is in csv format
         if not hdf5:
             system_parameters = pd.read_csv(folder + '/BSE_System_Parameters.csv', skiprows = 2)
             system_parameters.rename(columns = lambda x: x.strip(), inplace = True)
@@ -146,6 +133,7 @@ def interesting_systems(batch):
             # Check for hdf5 file
             sfile = h5.File(folder + '/batch_'+ str(batch['number']) +'.h5' ,'r')
             seeds = sfile['BSE_System_Parameters']['SEED'][:]
+            print('Lieke: You opened sfile sucessfully', sfile.keys()) 
         for index, sample in enumerate(batch['samples']):
             seed = seeds[index]
             sample.properties['SEED'] = seed
@@ -153,6 +141,7 @@ def interesting_systems(batch):
             sample.properties['batch'] = batch['number']
 
         if hdf5:
+            print('Lieke: but for some skjfshf reason it then dies here? ')
             double_compact_objects = sfile['BSE_Double_Compact_Objects']
 
         st1 = double_compact_objects['Stellar_Type(1)'][:]
