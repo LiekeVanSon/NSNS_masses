@@ -10,7 +10,7 @@ python_version = sys.version_info[0]
 print("python_version =", python_version)
 
 HERE = os.path.dirname(__file__)
-DEFAULT_CONFIG_FILE = os.path.join(HERE, 'compasConfigDefault.yaml')
+DEFAULT_CONFIG_FILE = os.path.join(HERE, 'compasConfig.yaml')
 
 
 class pythonProgramOptions:

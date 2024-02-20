@@ -5,7 +5,7 @@
 #SBATCH --output=SW.out                     # output storage file
 #SBATCH --error=SW.err                      # error storage file
 #SBATCH --time=0-10:00:00                   # Runtime format: D-HH:MM:SS
-#SBATCH --mem=2G                            # use 2 GB of Memory per cpu 
+#SBATCH --mem=16G                           # use 16 GB of Memory per cpu 
 #SBATCH -p cca,gen,genx                     # Partitions
 #SBATCH --mail-user=aac.van.son@gmail.com   # Send email to user
 #SBATCH --mail-type=FAIL                    # Only if failed

@@ -1,3 +1,0 @@
-cp: -r not specified; omitting directory '/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder//CosmicIntegration/__pycache__'
-/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e6_Fiducial_NSNS/CosmicIntegration/FastCosmicIntegration.py:837: UserWarning: Maximum chirp mass used for detectability calculation is below maximum binary chirp mass * (1+maximum redshift for detectability calculation)
-  detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes = find_detection_rate(args.path, filename=args.fname, dco_type=args.dco_type, weight_column=args.weight_column,
