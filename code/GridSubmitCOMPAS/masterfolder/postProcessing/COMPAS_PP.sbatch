@@ -35,7 +35,7 @@ cp $root_script_dir/postProcessing/append_weights.py $data_dir/postProcessing/
 cd $data_dir/postProcessing/
 
 # Combine the COMPAS batches into one file COMPAS_Output
-python h5copy.py  $data_dir/MainRun/ -r 2 -o $data_dir/MainRun/COMPAS_Output.h5 > COMPAS_PP.log
+# python h5copy.py  $data_dir/MainRun/ -r 2 -o $data_dir/MainRun/COMPAS_Output.h5 > COMPAS_PP.log
 
 
 #Run append weight

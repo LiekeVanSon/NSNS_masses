@@ -4,8 +4,8 @@
 #SBATCH --ntasks=1                          # Number of cores
 #SBATCH --output=COMPAS_PP.out              # output storage file
 #SBATCH --error=COMPAS_PP.err               # error storage file
-#SBATCH --time=1:00:00                      # Runtime in minutes
-#SBATCH --mem=2G                            # use 2 GB of Memory per cpu 
+#SBATCH --time=0-4:00:00                    # Runtime 
+#SBATCH --mem=16G                           # use 16 GB of Memory per cpu 
 #SBATCH -p cca,gen,genx                     # Partitions
 #SBATCH --mail-user=aac.van.son@gmail.com   # Send email to user
 #SBATCH --mail-type=FAIL                    # Only if failed

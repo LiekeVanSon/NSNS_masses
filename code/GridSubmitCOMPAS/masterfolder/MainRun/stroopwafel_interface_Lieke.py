@@ -29,6 +29,7 @@ userunSubmit = False #If false, use stroopwafel defaults
 compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS')   # Location of the executable      # Note: overrides pythonSubmit value
 
 # 1e6 sytems w. 20 cores and 1e4 systems per core takes ~1 hour)
+# 1e7 systems w. 20 cores and 2e5 systems per core takes ~7 hours for main run + 1 hour for post-processing + 1 hour Cosmic integration
 num_systems = int(1e7)              # Number of binary systems to evolve  # Note: overrides pythonSubmit value
 output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e7_Fiducial_NSNS//MainRun/'
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides pythonSubmit value
