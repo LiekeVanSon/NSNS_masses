@@ -1,0 +1,24 @@
+Traceback (most recent call last):
+  File "/mnt/sw/nix/store/gpkc8q6zjnp3n3h3w9hbmbj6gjbxs85w-python-3.10.10-view/lib/python3.10/shutil.py", line 816, in move
+    os.rename(src, real_dst)
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_AllDCO_AIS//MainRun/grid_0.csv' -> '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_AllDCO_AIS//MainRun/batch_0/grid_0.csv'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/MainRun/stroopwafel_interface_Lieke.py", line 323, in <module>
+    sw_object.explore(intial_pdf) 
+  File "/mnt/home/lvanson/Programs/stroopwafel/stroopwafel/sw.py", line 223, in explore
+    self.process_batches(batches, True)
+  File "/mnt/home/lvanson/Programs/stroopwafel/stroopwafel/sw.py", line 97, in process_batches
+    shutil.move(batch['grid_filename'], os.path.join(folder, 'grid_' + str(batch['number']) + '.csv'))
+  File "/mnt/sw/nix/store/gpkc8q6zjnp3n3h3w9hbmbj6gjbxs85w-python-3.10.10-view/lib/python3.10/shutil.py", line 836, in move
+    copy_function(src, real_dst)
+  File "/mnt/sw/nix/store/gpkc8q6zjnp3n3h3w9hbmbj6gjbxs85w-python-3.10.10-view/lib/python3.10/shutil.py", line 434, in copy2
+    copyfile(src, dst, follow_symlinks=follow_symlinks)
+  File "/mnt/sw/nix/store/gpkc8q6zjnp3n3h3w9hbmbj6gjbxs85w-python-3.10.10-view/lib/python3.10/shutil.py", line 254, in copyfile
+    with open(src, 'rb') as fsrc:
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_AllDCO_AIS//MainRun/grid_0.csv'
+cp: -r not specified; omitting directory '/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder//MainRun/__pycache__'
+cp: target '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BBH_AIS//MainRun/' is not a directory
+cp: cannot create regular file '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BBH_AIS//MainRun/': No such file or directory

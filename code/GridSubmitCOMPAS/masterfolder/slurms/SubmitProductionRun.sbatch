@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Step 1: Change output dirs in stroopwafel_interface_Lieke.py, COMPAS_r.sbatch, COMPAS_PP.sbatch, and CosmicIntegration.slurm
-new_dir="/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e7_Fiducial_NSNS/"
+new_dir="/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e5_Fiducial_AllDCO_AIS/"
 sed -i "s|output_folder = .*|output_folder = '$new_dir/MainRun/'|g" ../MainRun/stroopwafel_interface_Lieke.py
 sed -i "s|data_dir=.*|data_dir='$new_dir'|g" COMPAS_r.sbatch
 sed -i "s|data_dir=.*|data_dir='$new_dir'|g" COMPAS_PP.sbatch

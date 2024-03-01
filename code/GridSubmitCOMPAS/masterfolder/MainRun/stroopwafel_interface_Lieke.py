@@ -22,7 +22,7 @@ import argparse
 
 
 ### Include options from local pythonSubmit file      
-userunSubmit = False #If false, use stroopwafel defaults
+userunSubmit = True #If false, use stroopwafel defaults
 
 ### Set default stroopwafel inputs - these are overwritten by any command-line arguments
 
@@ -30,12 +30,12 @@ compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS'
 
 # 1e6 sytems w. 20 cores and 1e4 systems per core takes ~1 hour)
 # 1e7 systems w. 20 cores and 2e5 systems per core takes ~7 hours for main run + 1 hour for post-processing + 1 hour Cosmic integration
-num_systems = int(1e7)              # Number of binary systems to evolve  # Note: overrides pythonSubmit value
-output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e7_Fiducial_NSNS//MainRun/'
+num_systems = int(1e5)              # Number of binary systems to evolve  # Note: overrides pythonSubmit value
+output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_AllDCO_AIS//MainRun/'
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides pythonSubmit value
 
-num_cores = 20                       # Number of cores to parallelize over 
-num_per_core = int(2e5)              # Number of binaries per batch
+num_cores = 10                       # Number of cores to parallelize over 
+num_per_core = int(5e3)              # Number of binaries per batch
 mc_only = False                      # Exclude adaptive importance sampling (currently not implemented, leave set to True)
 run_on_hpc = True                    # Run on slurm based cluster HPC
 
@@ -45,7 +45,7 @@ hdf5 = True
 
 
 ### Default options for interesting systems when using AIS: ['BBH', 'DNS', 'BHNS', 'AnyDCO' ]
-sys_int = 'DNS'
+sys_int = 'AnyDCO'
 
 def create_dimensions():
     """
@@ -103,7 +103,8 @@ def configure_code_run(batch):
     grid_filename = os.path.join(output_folder, 'grid_' + str(batch_num) + '.csv')
     output_container = 'batch_' + str(batch_num)
     random_seed = random_seed_base + batch_num*NUM_SYSTEMS_PER_RUN  # ensure that random numbers are not reused across batches
-    compas_args = [compas_executable, '--grid', grid_filename, '--output-container', output_container, '--random-seed' , random_seed, '--add-options-to-sysparms', 'NEVER']
+    compas_args = [compas_executable, '--grid', grid_filename, '--output-container', output_container, '--random-seed' , random_seed,\
+                    '--add-options-to-sysparms', 'NEVER', '--logfile-definitions', 'COMPAS_Output_Definitions.txt']
     # '--add-options-to-sysparms' create a whole buch of unnecessary output just because you are running a grid
     [compas_args.extend([key, val]) for key, val in commandOptions.items()]
     for params in extra_params:
@@ -266,7 +267,7 @@ if __name__ == '__main__':
     run_on_hpc = namespace.run_on_hpc #If True, it will run on a clustered system helios, rather than your pc
     mc_only = namespace.mc_only # If you dont want to do the refinement phase and just do random mc exploration
     output_filename = namespace.output_filename #The name of the output file
-    output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e7_Fiducial_NSNS//MainRun/'
+    output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_AllDCO_AIS//MainRun/'
 
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()
@@ -276,6 +277,7 @@ if __name__ == '__main__':
     # Over-ride with runSubmit + compasConfigDefault.yaml parameters, if desired
     if userunSubmit:
         try:
+            print('userunSubmit trying to import settings')
             from runSubmit import pythonProgramOptions
             programOptions = pythonProgramOptions()   # Call the programoption class from runSubmit
             pySubOptions   = programOptions.command   # Get the dict from pythonProgramOptions

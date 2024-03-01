@@ -4,9 +4,9 @@
 #SBATCH --ntasks=1                          # Number of cores
 #SBATCH --output=COMPAS_PP.out              # output storage file
 #SBATCH --error=COMPAS_PP.err               # error storage file
-#SBATCH --time=0-4:00:00                    # Runtime 
-#SBATCH --mem=16G                           # use 16 GB of Memory per cpu 
-#SBATCH -p cca,gen,genx                     # Partitions
+#SBATCH --time=0-4:00:00                    # use 0-4:00:00 for N1e7 sim
+#SBATCH --mem=16G                           # use 16 GB of Memory per cpu for N1e7 sim
+#SBATCH -p cca                              # Partitions
 #SBATCH --mail-user=aac.van.son@gmail.com   # Send email to user
 #SBATCH --mail-type=FAIL                    # Only if failed
 
@@ -23,7 +23,7 @@ module load python
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.41.06/N1e7_Fiducial_NSNS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_AllDCO_AIS/'
 
 # Make postProcessing directory and copy scripts
 mkdir -p $data_dir/postProcessing
