@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=COMPAS_PP                #job name
-#SBATCH --nodes=1                           # Number of nodes
 #SBATCH --ntasks=1                          # Number of cores
 #SBATCH --output=COMPAS_PP.out              # output storage file
 #SBATCH --error=COMPAS_PP.err               # error storage file
@@ -23,7 +22,7 @@ module load python
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_AllDCO_AIS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BBH_AIS/'
 
 # Make postProcessing directory and copy scripts
 mkdir -p $data_dir/postProcessing

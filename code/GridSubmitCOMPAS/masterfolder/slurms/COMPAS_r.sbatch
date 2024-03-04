@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH --job-name=COMPAS_r                 #job name
-#SBATCH --nodes=1                           # Number of nodes
-#SBATCH --ntasks=1                          # Number of cores
+#SBATCH --ntasks=25                         # Number of cores (this should match what stroopwafel_interface_Lieke.py wants to use +1)
 #SBATCH --output=SW.out                     # output storage file
 #SBATCH --error=SW.err                      # error storage file
 #SBATCH --time=0-10:00:00                   # Runtime format: D-HH:MM:SS use 1-00:00:00  for N1e7 sim
-#SBATCH --mem=8G                           # use 16 GB of Memory per cpu for N1e7 sim
+#SBATCH --mem=8G                            # use 16 GB of Memory per cpu for N1e7 sim
 #SBATCH -p cca                              # Partitions
 #SBATCH --mail-user=aac.van.son@gmail.com   # Send email to user
 #SBATCH --mail-type=FAIL                    # Only if failed
+
 
 #Print some stuff on screen
 echo $SLURM_JOB_ID
@@ -20,7 +20,7 @@ export QT_QPA_PLATFORM=offscreen # To avoid the X Display error
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_AllDCO_AIS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BBH_AIS/'
 
 #Load modules
 module load gsl boost hdf5 gcc python

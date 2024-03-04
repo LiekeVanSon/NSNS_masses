@@ -204,7 +204,7 @@ numericalChoices:
 stringChoices:
 
     ### LOGISTICS
-#    --add-options-to-sysparms: 'NEVER'                                     # Default: 'GRID'                        # Options: ['NEVER','GRID','ALWAYS']
+   --add-options-to-sysparms: 'NEVER'                                      # Default: 'GRID'                        # Options: ['NEVER','GRID','ALWAYS']
 #    --grid: ''                                                            # Default: ''                                                                                                                                                                 # grid file name (e.g. 'mygrid.txt')
 #    --mode: 'BSE'                                                         # Default: 'BSE'                         # Options: ['BSE','SSE']                                                                                                             # evolving single (SSE) or binary stars (BSE)
 #    --notes: { }                                                          # Default: { }
@@ -259,7 +259,7 @@ stringChoices:
     ### LOGFILES AND OUTPUTS 
 #    --logfile-type: 'HDF5'                                                # Default: 'HDF5'                        # Options: ['TXT','TSV','CSV','HDF5','NONE']
 #    --logfile-name-prefix: ''                                             # Default: ''
-#    --logfile-definitions: 'COMPAS_Output_Definitions.txt'                # Default: ''
+   --logfile-definitions: 'COMPAS_Output_Definitions.txt'                  # Default: ''
 #    --logfile-common-envelopes: 'BSE_Common_Envelopes'                    # Default: 'BSE_Common_Envelopes'
 #    --logfile-detailed-output: 'BSE_Detailed_Output'                      # Default: 'BSE_Detailed_Output'
 #    --logfile-double-compact-objects: 'BSE_Double_Compact_Objects'        # Default: 'BSE_Double_Compact_Objects'

@@ -13,10 +13,18 @@
 # BSE System Parameters
 # start with the default BSE System Parameters specification and add:
 bse_sysparms_rec += {                                                    # set the BSE System Parameters specification to:
-    BINARY_PROPERTY::OPTIMISTIC_COMMON_ENVELOPE,			# Optimistic CE flag
+    BINARY_PROPERTY::OPTIMISTIC_COMMON_ENVELOPE,			             # Optimistic CE flag
     BINARY_PROPERTY::IMMEDIATE_RLOF_POST_COMMON_ENVELOPE,                # Flag to indicate if either star overflows its Roche lobe immediately following common envelope event.
-    BINARY_PROPERTY::COMMON_ENVELOPE_EVENT_COUNT,
+    BINARY_PROPERTY::COMMON_ENVELOPE_EVENT_COUNT,                        # How many common envelopes did system experience?
     BINARY_PROPERTY::SYSTEMIC_SPEED,
+    STAR_1_PROPERTY::DRAWN_KICK_MAGNITUDE,                                  # Supernova star 1 properties for reproducing
+    STAR_1_PROPERTY::KICK_MAGNITUDE,                                        # Supernova star 1 properties for reproducing
+    STAR_1_PROPERTY::SUPERNOVA_PHI,                                         # Supernova star 1 properties for reproducing
+    STAR_1_PROPERTY::SUPERNOVA_THETA,                                       # Supernova star 1 properties for reproducing
+    STAR_2_PROPERTY::DRAWN_KICK_MAGNITUDE,                                  # Supernova star 2 properties for reproducing
+    STAR_2_PROPERTY::KICK_MAGNITUDE,                                        # Supernova star 2 properties for reproducing
+    STAR_2_PROPERTY::SUPERNOVA_PHI,                                         # Supernova star 2 properties for reproducing
+    STAR_2_PROPERTY::SUPERNOVA_THETA,                                       # Supernova star 2 properties for reproducing
 }
 
 
