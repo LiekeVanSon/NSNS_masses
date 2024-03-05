@@ -18,7 +18,7 @@ export QT_QPA_PLATFORM=offscreen # To avoid the X Display error
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BHNS_AIS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BHBH_AIS/'
 
 #Load modules
 module load gsl boost hdf5 gcc python

@@ -15,7 +15,7 @@ echo $SLURM_ARRAY_TASK_ID
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BHNS_AIS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BHBH_AIS/'
 
 # check if CosmicIntegration folder exists, and copy scripts to output directory
 mkdir -p $data_dir/CosmicIntegration/
