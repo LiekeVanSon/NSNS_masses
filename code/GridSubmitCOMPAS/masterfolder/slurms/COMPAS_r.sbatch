@@ -4,11 +4,9 @@
 #SBATCH --output=SW.out                     # output storage file
 #SBATCH --error=SW.err                      # error storage file
 #SBATCH --time=1-00:00:00                   # Runtime format: D-HH:MM:SS use 1-00:00:00  for N1e7 sim
-#SBATCH --mem=100G                          # use > 16 GB of Memory for stroopwafel_interface_Lieke w. N1e7 sim, +  (x cores * 4 Gb) 
 #SBATCH -p cca                              # Partitions
-#SBATCH --mail-user=aac.van.son@gmail.com   # Send email to user
+#SBATCH --mail-user=aac.van.son@gmail.com   # Send email 
 #SBATCH --mail-type=FAIL                    # Only if failed
-
 
 #Print some stuff on screen
 echo $SLURM_JOB_ID

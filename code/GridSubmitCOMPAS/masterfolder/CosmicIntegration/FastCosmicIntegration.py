@@ -472,7 +472,7 @@ def find_detection_rate(path, filename="COMPAS_Output.h5", dco_type="BBH", weigh
     return detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes
 
 
-def append_rates(path, outfilename, detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes, n_redshifts_detection,
+def append_rates(path, outfilename, detection_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, n_redshifts_detection,
     maxz=5., sensitivity="O1", dco_type="BHBH", mu0=0.035, muz=-0.23, sigma0=0.39, sigmaz=0., alpha=0., aSF = 0.01, bSF = 2.77, cSF = 2.90, dSF = 4.70,
     append_binned_by_z = False, redshift_binsize=0.1):
     """
@@ -482,7 +482,6 @@ def append_rates(path, outfilename, detection_rate, formation_rate, merger_rate,
             path                   --> [string] Path to the COMPAS file that contains the output
             outfilename            --> [string] Name of the hdf5 file that you want to write your rates to
             detection_rate         --> [2D float array] Detection rate for each binary at each redshift in 1/yr
-            formation_rate         --> [2D float array] Formation rate for each binary at each redshift in 1/yr/Gpc^3
             merger_rate            --> [2D float array] Merger rate for each binary at each redshift in 1/yr/Gpc^3
             redshifts              --> [list of floats] List of redshifts
             COMPAS                 --> [Object]         Relevant COMPAS data in COMPASData Class
@@ -518,7 +517,7 @@ def append_rates(path, outfilename, detection_rate, formation_rate, merger_rate,
         
         # Would you like to write your rates to a different file? 
         if path == outfilename:
-            raise ValueError('you cant append directly to the input data, will change outfilename to %s'%(outfilename)+'_1')
+            print('you cant append directly to the input data, will change outfilename to %s'%(outfilename)+'_1')
             outfilename = outfilename+'_1'
 
         #'you want to save your output to a different file!'
