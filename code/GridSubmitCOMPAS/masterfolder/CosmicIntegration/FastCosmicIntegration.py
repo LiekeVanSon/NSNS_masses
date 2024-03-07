@@ -847,7 +847,7 @@ if __name__ == "__main__":
     start_append = time.time()
     if args.append_rates:
         n_redshifts_detection = int(args.max_redshift_detection / args.redshift_step)
-        append_rates(args.path + args.fname, args.outfname, detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes, n_redshifts_detection,
+        append_rates(args.path + args.fname, args.outfname, detection_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, n_redshifts_detection,
             maxz=args.max_redshift_detection, sensitivity=args.sensitivity, dco_type=args.dco_type, mu0=args.mu0, muz=args.muz, sigma0=args.sigma0, sigmaz=args.sigmaz, alpha=args.alpha,
             aSF = args.aSF,  bSF = args.bSF , cSF = args.cSF , dSF = args.dSF ,
             append_binned_by_z = args.binned_rates, redshift_binsize=args.zBinSize)

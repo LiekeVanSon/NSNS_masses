@@ -1,5 +1,0 @@
-cp: -r not specified; omitting directory '/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder//CosmicIntegration/__pycache__'
-Traceback (most recent call last):
-  File "/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BBH_AIS/CosmicIntegration/FastCosmicIntegration.py", line 850, in <module>
-    append_rates(args.path + args.fname, args.outfname, detection_rate, formation_rate, merger_rate, redshifts, COMPAS, Average_SF_mass_needed, shell_volumes, n_redshifts_detection,
-TypeError: append_rates() got multiple values for argument 'maxz'

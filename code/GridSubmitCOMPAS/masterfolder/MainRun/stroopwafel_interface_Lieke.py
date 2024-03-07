@@ -30,12 +30,12 @@ compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS'
 
 # 1e6 sytems w. 20 cores and 1e4 systems per core takes ~1 hour)
 # 1e7 systems w. 20 cores and 2e5 systems per core takes ~7 hours for main run + 1 hour for post-processing + 1 hour Cosmic integration
-num_systems = int(1e6)              # Number of binary systems to evolve  # Note: overrides pythonSubmit value
-output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BHBH_AIS//MainRun/'
+num_systems = int(1e7)              # Number of binary systems to evolve  # Note: overrides pythonSubmit value
+output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_Fiducial_AllDCO_AIS//MainRun/'
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides pythonSubmit value
 
-num_cores = 13                       # Number of cores to parallelize over 
-num_per_core = int(5e4)              # Number of binaries per batch
+num_cores = 30                       # Number of cores to parallelize over 
+num_per_core = int(1e5)              # Number of binaries per batch
 mc_only = False                      # Exclude adaptive importance sampling (currently not implemented, leave set to True)
 run_on_hpc = True                    # Run on slurm based cluster HPC
 
@@ -266,7 +266,7 @@ if __name__ == '__main__':
     run_on_hpc = namespace.run_on_hpc #If True, it will run on a clustered system helios, rather than your pc
     mc_only = namespace.mc_only # If you dont want to do the refinement phase and just do random mc exploration
     output_filename = namespace.output_filename #The name of the output file
-    output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e6_Fiducial_BHBH_AIS//MainRun/'
+    output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_Fiducial_AllDCO_AIS//MainRun/'
 
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()
