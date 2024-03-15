@@ -3,7 +3,7 @@ import h5py  as h5
 import os
 import time
 import matplotlib.pyplot as plt
-from astropy.cosmology import WMAP9 as cosmology
+from astropy.cosmology import Planck18 as cosmology # changed from WMAP9 to Planck 18
 # import scipy
 from scipy.interpolate import interp1d
 from scipy.stats import norm as NormDist
