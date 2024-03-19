@@ -636,16 +636,29 @@ def append_rates(path, outfilename, detection_rate, merger_rate, redshifts, COMP
         # re-arrange your list of rate parameters
         DCO_to_rate_mask     = COMPAS.DCOmask #save this bool for easy conversion between BSE_Double_Compact_Objects, and CI weights
         rate_data_list       = [DCO['SEED'][DCO_to_rate_mask], DCO_to_rate_mask , save_redshifts,  save_merger_rate]
-        #, merger_rate[:,0], save_detection_rate, Average_SF_mass_needed]
-        rate_list_names      = ['SEED', 'DCOmask', 'redshifts', 'merger_rate']
-        #,'merger_rate_z0', 'detection_rate'+sensitivity, 'Average_SF_mass_needed']
-        for i, data in enumerate(rate_data_list):
-            print('Adding rate info {} of shape {}'.format(rate_list_names[i], np.shape(data)) )
+
+        # Collect all the data into a list of arrays
+        rate_data_arrays = [np.array(data) for data in rate_data_list]
+
+        # Write all the data at once
+        for i, data in enumerate(rate_data_arrays):
+            print('Adding rate info {} of shape {}'.format(rate_list_names[i], np.shape(data)))
             # Check if dataset exists, if so, just delete it
             if rate_list_names[i] in h_new[new_rate_group].keys():
                 del h_new[new_rate_group][rate_list_names[i]]
-            # write rates as a new data set
-            dataNew     = h_new[new_rate_group].create_dataset(rate_list_names[i], data=data)
+            # Write data as a new dataset
+            dataNew = h_new[new_rate_group].create_dataset(rate_list_names[i], data=data)
+            
+        # #, merger_rate[:,0], save_detection_rate, Average_SF_mass_needed]
+        # rate_list_names      = ['SEED', 'DCOmask', 'redshifts', 'merger_rate']
+        # #,'merger_rate_z0', 'detection_rate'+sensitivity, 'Average_SF_mass_needed']
+        # for i, data in enumerate(rate_data_list):
+        #     print('Adding rate info {} of shape {}'.format(rate_list_names[i], np.shape(data)) )
+        #     # Check if dataset exists, if so, just delete it
+        #     if rate_list_names[i] in h_new[new_rate_group].keys():
+        #         del h_new[new_rate_group][rate_list_names[i]]
+        #     # write rates as a new data set
+        #     dataNew     = h_new[new_rate_group].create_dataset(rate_list_names[i], data=data)
 
     #Always close your files again ;)
     h_new.close()

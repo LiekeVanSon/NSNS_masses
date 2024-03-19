@@ -1,2 +1,1 @@
 cp: -r not specified; omitting directory '/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder//CosmicIntegration/__pycache__'
-slurmstepd: error: *** JOB 3251061 ON worker3087 CANCELLED AT 2024-03-07T11:15:20 DUE TO TIME LIMIT ***
