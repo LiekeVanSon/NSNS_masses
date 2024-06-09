@@ -145,7 +145,7 @@ numericalChoices:
 #    --zeta-radiative-envelope-giant: 6.500000                             # Default: 6.500000
 
     ### COMMON ENVELOPE
-#    --common-envelope-alpha: 1.000000                                     # Default: 1.000000
+   --common-envelope-alpha: 0.5                                     # Default: 1.000000
 #    --common-envelope-alpha-thermal: 1.000000                             # Default: 1.000000                                                                                                                                                           # lambda = alpha_th*lambda_b + (1-alpha_th)*lambda_g
 #    --common-envelope-lambda: 0.100000                                    # Default: 0.100000                                                                                                                                                           # Only if using 'LAMBDA_FIXED'
 #    --common-envelope-lambda-multiplier: 1.000000                         # Default: 1.000000                                                                                                                                                           # Multiply common envelope lambda by some constant
