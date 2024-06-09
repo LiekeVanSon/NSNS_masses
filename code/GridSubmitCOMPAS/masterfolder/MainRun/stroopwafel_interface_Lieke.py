@@ -29,12 +29,13 @@ userunSubmit = True #If false, use stroopwafel defaults
 compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS')   # Location of the executable      # Note: overrides pythonSubmit value
 
 # 1e6 sytems w. 20 cores and 1e4 systems per core takes ~1 hour)
-# 1e7 systems w. 20 cores and 2e5 systems per core takes ~7 hours for main run + 1 hour for post-processing + 1 hour Cosmic integration
+# 1e7 systems w. 20 cores and 2e5 systems per core takes ~7 hours for main run + 1 hour for post-processing + 10 min Cosmic integration
+# 1e7 systems w. 70 cores and 1e5 systems per core takes 1hr expl ~7 hours for sw + 1 hour AIS run + 1 hour for post-processing + 10 min Cosmic integration
 num_systems = int(1e7)              # Number of binary systems to evolve  # Note: overrides pythonSubmit value
-output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_CEa05_AllDCO_AIS//MainRun/'
+output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_CEa025_AllDCO_AIS//MainRun/'
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides pythonSubmit value
 
-num_cores = 70                       # Number of cores to parallelize over 
+num_cores = 36                       # Number of cores to parallelize over 
 num_per_core = int(1e5)              # Number of binaries per batch
 mc_only = False                      # Exclude adaptive importance sampling (currently not implemented, leave set to True)
 run_on_hpc = True                    # Run on slurm based cluster HPC
@@ -266,7 +267,7 @@ if __name__ == '__main__':
     run_on_hpc = namespace.run_on_hpc #If True, it will run on a clustered system helios, rather than your pc
     mc_only = namespace.mc_only # If you dont want to do the refinement phase and just do random mc exploration
     output_filename = namespace.output_filename #The name of the output file
-    output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_CEa05_AllDCO_AIS//MainRun/'
+    output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_CEa025_AllDCO_AIS//MainRun/'
 
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()
@@ -299,12 +300,16 @@ if __name__ == '__main__':
 
     print("Output folder is: ", output_folder)
     if os.path.exists(output_folder):
+        # test if there is a file named COMPAS_Output.h5 in the output_folder
+        if os.path.exists(os.path.join(output_folder, 'COMPAS_Output.h5')):
+            print("The output folder already contains a file named COMPAS_Output! Will now exit")
+            exit()
         #command = input ("The output folder already exists. If you continue, I will remove all its content. Press (Y/N)\n")
         #if (command == 'Y'):
-        shutil.rmtree(output_folder)
+        # shutil.rmtree(output_folder)
         #else:
         #    exit()
-    os.makedirs(output_folder)
+    os.makedirs(output_folder, exist_ok=True)
 
 
     # STEP 2 : Create an instance of the Stroopwafel class
