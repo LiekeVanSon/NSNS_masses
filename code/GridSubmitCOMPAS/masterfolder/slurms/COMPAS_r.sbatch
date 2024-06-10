@@ -18,7 +18,7 @@ export QT_QPA_PLATFORM=offscreen # To avoid the X Display error
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_CEa025_AllDCO_AIS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_beta1_AllDCO_AIS/'
 
 # Create data_dir if it does not exist
 mkdir -p $data_dir

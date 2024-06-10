@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Step 1: Change output dirs in stroopwafel_interface_Lieke.py, COMPAS_r.sbatch, COMPAS_PP.sbatch, and CosmicIntegration.slurm
-new_dir="/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_CEa025_AllDCO_AIS/"
+new_dir="/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_beta1_AllDCO_AIS/"
 sed -i "s|output_folder = .*|output_folder = '$new_dir/MainRun/'|g" ../MainRun/stroopwafel_interface_Lieke.py
 sed -i "s|data_dir=.*|data_dir='$new_dir'|g" COMPAS_r.sbatch
 sed -i "s|data_dir=.*|data_dir='$new_dir'|g" COMPAS_PP.sbatch
@@ -16,3 +16,4 @@ pid_pp=$(sbatch --parsable --dependency=afterok:$pid COMPAS_PP.sbatch --kill-on-
 
 # Step 4: Submit CosmicIntegration after postprocessing completed
 sbatch --dependency=afterok:$pid_pp CosmicIntegration.slurm --kill-on-invalid-dep=yes
+# sbatch CosmicIntegration.slurm --kill-on-invalid-dep=yes
