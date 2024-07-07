@@ -137,6 +137,7 @@ def interesting_systems(batch):
             # Check for hdf5 file
             sfile = h5.File(folder + '/batch_'+ str(batch['number']) +'.h5' ,'r')
             seeds = sfile['BSE_System_Parameters']['SEED'][:]
+
         for index, sample in enumerate(batch['samples']):
             seed = seeds[index]
             sample.properties['SEED'] = seed
@@ -145,11 +146,16 @@ def interesting_systems(batch):
 
         if hdf5:
             double_compact_objects = sfile['BSE_Double_Compact_Objects']
+            system_paramters       = sfile['BSE_System_Parameters']
 
-        st1 = double_compact_objects['Stellar_Type(1)'][:]
-        st2 = double_compact_objects['Stellar_Type(2)'][:]
-        merger_flag = double_compact_objects['Merges_Hubble_Time'][:]    
-        dco_seeds = double_compact_objects['SEED'][:]
+        st1 = system_paramters['Stellar_Type(1)'][:]
+        st2 = system_paramters['Stellar_Type(2)'][:]
+        sys_seeds = system_paramters['SEED'][:]
+
+        # st1 = double_compact_objects['Stellar_Type(1)'][:]
+        # st2 = double_compact_objects['Stellar_Type(2)'][:]
+        # merger_flag = double_compact_objects['Merges_Hubble_Time'][:]    
+        # dco_seeds = double_compact_objects['SEED'][:]
 
         #Generally, this is the line you would want to change.
         if sys_int == 'WDWD':
@@ -163,13 +169,13 @@ def interesting_systems(batch):
         if sys_int == 'AnyDCO':
             dco_mask = np.logical_and(np.logical_or(st1 == 13, st1 == 14), np.logical_or(st2 == 13, st2 == 14) )
 
-        merge_mask = merger_flag == 1
+        # merge_mask = merger_flag == 1
         # dns_mask = np.logical_and(merge_mask, dco_mask)
         # Lieke: for now, not focussing on merging WDWD, but any WDWD
-        dns_mask = dco_mask
+        interesting_mask = dco_mask
 
         # Lieke: select systems of interest
-        interesting_systems_seeds = set(dco_seeds[dns_mask])
+        interesting_systems_seeds = set(sys_seeds[interesting_mask])   #set(dco_seeds[interesting_mask])
         for index, sample in enumerate(batch['samples']):
             if sample.properties['SEED'] in interesting_systems_seeds:
                 sample.properties['is_hit'] = 1
@@ -178,7 +184,7 @@ def interesting_systems(batch):
         if hdf5:
             sfile.close()
 
-        return sum(dns_mask) #len(dns)
+        return sum(interesting_mask) #len(dns)
 
     # You probably had no DCO's in your batch
     except IOError as error:
