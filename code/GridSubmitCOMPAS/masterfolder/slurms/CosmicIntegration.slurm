@@ -1,7 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=CosmicIntegration
 #SBATCH --output=CosmicIntegration%j.out
-#SBATCH --error=CosmicIntegration%j.err
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=aac.van.son@gmail.com
 #SBATCH --partition=cca

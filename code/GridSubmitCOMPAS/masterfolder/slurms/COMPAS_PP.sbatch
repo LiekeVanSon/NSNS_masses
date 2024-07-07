@@ -2,7 +2,6 @@
 #SBATCH --job-name=COMPAS_PP                #job name
 #SBATCH --ntasks=1                          # Number of cores
 #SBATCH --output=COMPAS_PP%j.out              # output storage file
-#SBATCH --error=COMPAS_PP%j.err               # error storage file
 #SBATCH --time=0-4:00:00                    # use 0-4:00:00 for N1e7 sim
 #SBATCH -p cca                              # Partitions
 #SBATCH --mail-user=aac.van.son@gmail.com   # Send email to user
@@ -37,5 +36,5 @@ cd $data_dir/postProcessing/
 python h5copy.py  $data_dir/MainRun/ -r 2 -o $data_dir/MainRun/COMPAS_Output.h5 > COMPAS_PP.log
 
 #Run append weight
-python append_weights.py  > $data_dir/postProcessing/append_weights.log
+python append_weights.py  &> $data_dir/postProcessing/append_weights.log
 
