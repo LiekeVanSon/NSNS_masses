@@ -13,7 +13,7 @@ booleanChoices:
 #    --detailed-output: False                                              # Default: False                                                                                                                                                              # WARNING! this creates a data heavy file
 #    --enable-warnings: False                                              # Default: False                                                                                                                                                              # option to enable/disable warning messages
 #    --errors-to-file: False                                               # Default: False
-#    --evolve-unbound-systems: True                                        # Default: True
+   --evolve-unbound-systems: True                                        # Default: True
 #    --population-data-printing: False                                     # Default: False
 #    --print-bool-as-string: False                                         # Default: False
 #    --quiet: False                                                        # Default: False
@@ -56,10 +56,10 @@ booleanChoices:
 #    --pulsational-pair-instability: True                                  # Default: True
 
     ### PULSAR PARAMETERS
-#    --evolve-pulsars: False                                               # Default: False
+   --evolve-pulsars: True                                               # Default: False
 
    ### WHITE DWARF PARAMETERS
-#    --evolve-double-white-dwarfs: False                                   # Default: False
+   --evolve-double-white-dwarfs: True                                   # Default: False
 
 
 numericalChoices:
@@ -136,7 +136,7 @@ numericalChoices:
 #    --critical-mass-ratio-helium-giant-non-degenerate-accretor: 1.280000  # Default: 1.280000
 #    --critical-mass-ratio-white-dwarf-degenerate-accretor: 1.600000       # Default: 1.600000
 #    --critical-mass-ratio-white-dwarf-non-degenerate-accretor: 0.000000   # Default: 0.000000
-   --mass-transfer-fa: 1.0                                          # Default: 0.500000                                                                                                                                                           # Only if using mass-transfer-accretion-efficiency-prescription = 'FIXED'
+#    --mass-transfer-fa: 0.500000                                          # Default: 0.500000                                                                                                                                                           # Only if using mass-transfer-accretion-efficiency-prescription = 'FIXED'
 #    --mass-transfer-jloss: 1.000000                                       # Default: 1.000000                                                                                                                                                           # Only if using mass-transfer-angular-momentum-loss-prescription = 'FIXED'
 #    --mass-transfer-jloss-macleod-linear-fraction: 0.500000               # Default: 0.500000
 #    --mass-transfer-thermal-limit-C: 10.000000                            # Default: 10.000000
@@ -236,7 +236,7 @@ stringChoices:
 #    --critical-mass-ratio-prescription: 'NONE'                            # Default: 'NONE'                        # Options: ['HURLEY_HJELLMING_WEBBINK','GE20_IC','GE20','CLAEYS','NONE']
 #    --stellar-zeta-prescription: 'SOBERMAN'                               # Default: 'SOBERMAN'                    # Options: ['NONE','ARBITRARY','HURLEY','SOBERMAN']
 #    --mass-transfer-angular-momentum-loss-prescription: 'ISOTROPIC'       # Default: 'ISOTROPIC'                   # Options: ['ARBITRARY','MACLEOD_LINEAR','CIRCUMBINARY','ISOTROPIC','JEANS']
-   --mass-transfer-accretion-efficiency-prescription: 'FIXED'          # Default: 'THERMAL'                     # Options: ['FIXED','THERMAL']
+#    --mass-transfer-accretion-efficiency-prescription: 'THERMAL'          # Default: 'THERMAL'                     # Options: ['FIXED','THERMAL']
 #    --mass-transfer-rejuvenation-prescription: 'STARTRACK'                # Default: 'STARTRACK'                   # Options: ['STARTRACK','NONE']
 #    --mass-transfer-thermal-limit-accretor: 'CFACTOR'                     # Default: 'CFACTOR'                     # Options: ['ROCHELOBE','CFACTOR']
 

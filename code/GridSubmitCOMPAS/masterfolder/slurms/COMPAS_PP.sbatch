@@ -17,11 +17,12 @@ echo $SLURM_ARRAY_TASK_ID
 export QT_QPA_PLATFORM=offscreen # To avoid the X Display error
 
 #Load modules
+module load modules/2.1.1 # COMPAS was set with older version of modules (updated on rusty)
 module load python
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_beta1_AllDCO_AIS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.46.01/N1e6_Fid_WDWDAIS/'
 
 # Make postProcessing directory and copy scripts
 mkdir -p $data_dir/postProcessing
