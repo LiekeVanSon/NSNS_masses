@@ -18,7 +18,7 @@ export QT_QPA_PLATFORM=offscreen # To avoid the X Display error
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.46.01/N1e6_Fid_WDWDAIS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.46.01/N1e6_Fid_WDWD_AIS/'
 
 # Create data_dir if it does not exist
 mkdir -p $data_dir
@@ -35,6 +35,6 @@ module load modules/2.1.1 # COMPAS was set with older version of modules (update
 module load gsl hdf5 gcc python boost
 
 # Run your job
-python stroopwafel_interface_Lieke.py   > SW.log
+python stroopwafel_interface_Lieke.py   &> SW.log
 
 
