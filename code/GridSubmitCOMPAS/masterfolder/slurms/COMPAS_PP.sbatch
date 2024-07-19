@@ -21,7 +21,7 @@ module load python
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.46.01/N1e6_Fid_WDWD_AIS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.46.01/N1e5_Fid_WDWD_AIS/'
 
 # Make postProcessing directory and copy scripts
 mkdir -p $data_dir/postProcessing

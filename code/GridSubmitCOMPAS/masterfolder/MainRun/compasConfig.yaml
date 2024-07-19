@@ -59,7 +59,7 @@ booleanChoices:
    --evolve-pulsars: True                                               # Default: False
 
    ### WHITE DWARF PARAMETERS
-   --evolve-double-white-dwarfs: True                                   # Default: False
+#    --evolve-double-white-dwarfs: False                                   # Default: False
 
 
 numericalChoices:
