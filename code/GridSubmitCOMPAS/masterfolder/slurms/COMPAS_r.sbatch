@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=COMPAS_r                 #job name
 #SBATCH --ntasks=40                         # Number of cores (this should match what stroopwafel_interface_Lieke.py wants to use +1)
-#SBATCH --output=SW.out                     # output storage file
-#SBATCH --error=SW.err                      # error storage file
+#SBATCH --output=SW%j.out                     # output storage file
+#SBATCH --error=SW%j.err                      # error storage file
 #SBATCH --time=1-00:00:00                   # Runtime format: D-HH:MM:SS use 1-00:00:00  for N1e7 sim
 #SBATCH -p cca                              # Partitions
 #SBATCH --mail-user=aac.van.son@gmail.com   # Send email 
@@ -18,7 +18,7 @@ export QT_QPA_PLATFORM=offscreen # To avoid the X Display error
 
 #Set data directories
 root_script_dir=/mnt/home/lvanson/NSNS_masses/code/GridSubmitCOMPAS/masterfolder/
-data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.46.01/N1e5_Fid_WDWD_AIS/'
+data_dir='/mnt/ceph/users/lvanson/CompasOutput/v02.46.01/N1e6_Fid_WDWD_AIS_1/'
 
 # Create data_dir if it does not exist
 mkdir -p $data_dir
@@ -35,6 +35,6 @@ module load modules/2.1.1 # COMPAS was set with older version of modules (update
 module load gsl hdf5 gcc python boost
 
 # Run your job
-python stroopwafel_interface_Lieke.py   &> SW.log
+python stroopwafel_interface_Lieke.py > SW%j.log 2>&1
 
 
