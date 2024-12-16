@@ -5,6 +5,8 @@ import pandas as pd
 import shutil
 import time
 import numpy as np
+import traceback
+
 
 home_dir = os.path.expanduser("~")
 sys.path.append(home_dir + '/Programs/stroopwafel/') # Specific location for Lieke 
@@ -31,11 +33,11 @@ compas_executable = os.path.join(os.environ.get('COMPAS_ROOT_DIR'), 'src/COMPAS'
 # 1e6 sytems w. 20 cores and 1e4 systems per core takes ~1 hour)
 # 1e7 systems w. 20 cores and 2e5 systems per core takes ~7 hours for main run + 1 hour for post-processing + 10 min Cosmic integration
 # 1e7 systems w. 70 cores and 1e5 systems per core takes 1hr expl ~7 hours for sw + 1 hour AIS run + 1 hour for post-processing + 10 min Cosmic integration
-num_systems = int(1e7)              # Number of binary systems to evolve  # Note: overrides pythonSubmit value
-output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_beta1_AllDCO_AIS//MainRun/'
+num_systems = int(1e6)              # Number of binary systems to evolve  # Note: overrides pythonSubmit value
+output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.46.01/N1e6_Fid_WDWD_AIS_1//MainRun/'
 random_seed_base = 0                # The initial random seed to increment from                                       # Note: overrides pythonSubmit value
 
-num_cores = 36                       # Number of cores to parallelize over 
+num_cores = 37                       # Number of cores to parallelize over 
 num_per_core = int(1e5)              # Number of binaries per batch
 mc_only = False                      # Exclude adaptive importance sampling (currently not implemented, leave set to True)
 run_on_hpc = True                    # Run on slurm based cluster HPC
@@ -45,8 +47,8 @@ debug = True                        # show COMPAS output/errors
 hdf5 = True
 
 
-### Default options for interesting systems when using AIS: ['BBH', 'DNS', 'BHNS', 'AnyDCO' ]
-sys_int = 'AnyDCO'
+### Default options for interesting systems when using AIS: ['WDWD', 'BBH', 'DNS', 'BHNS', 'AnyDCO' ]
+sys_int = 'WDWD'
 
 def create_dimensions():
     """
@@ -57,7 +59,7 @@ def create_dimensions():
     OUT:
         As Output, this should return a list containing all the instances of Dimension class.
     """
-    m1 = classes.Dimension('--initial-mass-1', 5, 150, sampler.kroupa, prior.kroupa) 
+    m1 = classes.Dimension('--initial-mass-1', 0.9, 150, sampler.kroupa, prior.kroupa) 
     q = classes.Dimension('q', 0.01, 1, sampler.uniform, prior.uniform, should_print = False)
     a = classes.Dimension('--semi-major-axis', .01, 1000, sampler.flat_in_log, prior.flat_in_log)
     return [m1, q, a]
@@ -134,9 +136,14 @@ def interesting_systems(batch):
             double_compact_objects = pd.read_csv(folder + '/BSE_Double_Compact_Objects.csv', skiprows = 2)
             double_compact_objects.rename(columns = lambda x: x.strip(), inplace = True)
         else:
-            # Check for hdf5 file
+            # Lieke Jul 7 2024: change in behaviour of output container? v. v02.49.01
+            # rename file if exists
+            if os.path.isfile(folder + '/COMPAS_Output.h5'):
+                os.rename(folder + '/COMPAS_Output.h5', folder + '/batch_'+ str(batch['number']) +'.h5')
+            # open the hdf5 file
             sfile = h5.File(folder + '/batch_'+ str(batch['number']) +'.h5' ,'r')
             seeds = sfile['BSE_System_Parameters']['SEED'][:]
+
         for index, sample in enumerate(batch['samples']):
             seed = seeds[index]
             sample.properties['SEED'] = seed
@@ -144,14 +151,27 @@ def interesting_systems(batch):
             sample.properties['batch'] = batch['number']
 
         if hdf5:
-            double_compact_objects = sfile['BSE_Double_Compact_Objects']
+            #double_compact_objects = sfile['BSE_Double_Compact_Objects']
+            system_paramters       = sfile['BSE_System_Parameters']
 
-        st1 = double_compact_objects['Stellar_Type(1)'][:]
-        st2 = double_compact_objects['Stellar_Type(2)'][:]
-        merger_flag = double_compact_objects['Merges_Hubble_Time'][:]    
-        dco_seeds = double_compact_objects['SEED'][:]
+        st1     = system_paramters['Stellar_Type(1)'][:]
+        st2     = system_paramters['Stellar_Type(2)'][:]
+        m1      = system_paramters['Mass(1)'][:]
+        m2      = system_paramters['Mass(2)'][:]
+        stellar_merger  = system_paramters['Merger'][:]
+        sys_seeds = system_paramters['SEED'][:]
+
+        # st1 = double_compact_objects['Stellar_Type(1)'][:]
+        # st2 = double_compact_objects['Stellar_Type(2)'][:]
+        # merger_flag = double_compact_objects['Merges_Hubble_Time'][:]    
+        # dco_seeds = double_compact_objects['SEED'][:]
 
         #Generally, this is the line you would want to change.
+        if sys_int == 'WDWD':
+            dco_mask = np.logical_and(np.isin(st1, [10, 11, 12]), np.isin(st2, [10, 11, 12])) #HeWD 10, COWD 11 ONeWD 12
+            # super_chandrasekar mass 
+            super_ch_mass_mask = (m1 + m2) > 1.44 # is the sum of the masses more than M_ch
+
         if sys_int == 'BBH':
             dco_mask = np.logical_and(st1 == 14, st2 == 14)
         if sys_int == 'DNS':
@@ -161,11 +181,14 @@ def interesting_systems(batch):
         if sys_int == 'AnyDCO':
             dco_mask = np.logical_and(np.logical_or(st1 == 13, st1 == 14), np.logical_or(st2 == 13, st2 == 14) )
 
-        merge_mask = merger_flag == 1
-        dns_mask = np.logical_and(merge_mask, dco_mask)
+        # merge_mask = merger_flag == 1
+        # dns_mask = np.logical_and(merge_mask, dco_mask)
+        
+        # Lieke: focussing on WDWD with combined mass >1.44 that are NOT stellar mergers
+        interesting_mask = np.logical_and(stellar_merger == False, np.logical_and(dco_mask,super_ch_mass_mask) )
 
-        # Lieke: select systems of interest
-        interesting_systems_seeds = set(dco_seeds[dns_mask])
+        # select systems of interest
+        interesting_systems_seeds = set(sys_seeds[interesting_mask])   #set(dco_seeds[interesting_mask])
         for index, sample in enumerate(batch['samples']):
             if sample.properties['SEED'] in interesting_systems_seeds:
                 sample.properties['is_hit'] = 1
@@ -174,12 +197,13 @@ def interesting_systems(batch):
         if hdf5:
             sfile.close()
 
-        return sum(dns_mask) #len(dns)
+        return sum(interesting_mask) #len(dns)
 
     # You probably had no DCO's in your batch
     except IOError as error:
         print('You ran into an error during in interesting_systems(batch)', error,
               '\n It could be there were no DCOs in your batch, or there was an error in your COMPAS run (check slurms/batch_x.err)' )
+        traceback.print_exc()
         return 0
 
 def selection_effects(sw):
@@ -267,7 +291,7 @@ if __name__ == '__main__':
     run_on_hpc = namespace.run_on_hpc #If True, it will run on a clustered system helios, rather than your pc
     mc_only = namespace.mc_only # If you dont want to do the refinement phase and just do random mc exploration
     output_filename = namespace.output_filename #The name of the output file
-    output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.35.02/N1e7_beta1_AllDCO_AIS//MainRun/'
+    output_folder = '/mnt/ceph/users/lvanson/CompasOutput/v02.46.01/N1e6_Fid_WDWD_AIS_1//MainRun/'
 
     # Set commandOptions defaults - these are Compas option arguments
     commandOptions = dict()
@@ -315,12 +339,10 @@ if __name__ == '__main__':
     # STEP 2 : Create an instance of the Stroopwafel class
     sw_object = sw.Stroopwafel(TOTAL_NUM_SYSTEMS, NUM_CPU_CORES, NUM_SYSTEMS_PER_RUN, output_folder, output_filename, debug = debug, run_on_helios = run_on_hpc, mc_only = mc_only)
 
-
     # STEP 3: Initialize the stroopwafel object with the user defined functions and create dimensions and initial distribution
     dimensions = create_dimensions()
     sw_object.initialize(dimensions, interesting_systems, configure_code_run, rejected_systems, update_properties_method = update_properties)
     #sw_object.initialize(dimensions, None, configure_code_run, None, update_properties_method = update_properties)
-
 
     intial_pdf = distributions.InitialDistribution(dimensions)
     # STEP 4: Run the 4 phases of stroopwafel

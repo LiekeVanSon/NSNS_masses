@@ -17,14 +17,23 @@ bse_sysparms_rec += {                                                    # set t
     BINARY_PROPERTY::IMMEDIATE_RLOF_POST_COMMON_ENVELOPE,                # Flag to indicate if either star overflows its Roche lobe immediately following common envelope event.
     BINARY_PROPERTY::COMMON_ENVELOPE_EVENT_COUNT,                        # How many common envelopes did system experience?
     BINARY_PROPERTY::SYSTEMIC_SPEED,
+    BINARY_PROPERTY::TIME,                                                  # life time of binary
+    BINARY_PROPERTY::ECCENTRICITY,                                          # e for tcol
+    BINARY_PROPERTY::SEMI_MAJOR_AXIS_RSOL,                                  # last recorded semi major ax in Rsun
+    STAR_1_PROPERTY::MASS,                                                  # M1 for tcol
+    STAR_2_PROPERTY::MASS,                                                  # M2 for tcol
+    STAR_1_PROPERTY::MASS_TRANSFER_DONOR_HISTORY,
+    STAR_2_PROPERTY::MASS_TRANSFER_DONOR_HISTORY,
     STAR_1_PROPERTY::DRAWN_KICK_MAGNITUDE,                                  # Supernova star 1 properties for reproducing
     STAR_1_PROPERTY::KICK_MAGNITUDE,                                        # Supernova star 1 properties for reproducing
     STAR_1_PROPERTY::SUPERNOVA_PHI,                                         # Supernova star 1 properties for reproducing
     STAR_1_PROPERTY::SUPERNOVA_THETA,                                       # Supernova star 1 properties for reproducing
+    STAR_1_PROPERTY::MEAN_ANOMALY,                                          # Supernova star 1 properties for reproducing
     STAR_2_PROPERTY::DRAWN_KICK_MAGNITUDE,                                  # Supernova star 2 properties for reproducing
     STAR_2_PROPERTY::KICK_MAGNITUDE,                                        # Supernova star 2 properties for reproducing
     STAR_2_PROPERTY::SUPERNOVA_PHI,                                         # Supernova star 2 properties for reproducing
     STAR_2_PROPERTY::SUPERNOVA_THETA,                                       # Supernova star 2 properties for reproducing
+    STAR_2_PROPERTY::MEAN_ANOMALY,                                           # Supernova star 2 properties for reproducing
 }
 
 
@@ -47,6 +56,7 @@ BSE_DCO_Rec += {
 # BSE RLOF Parameters
 # start with the default RLOF Parameters specification and add:
 BSE_RLOF_REC += {
+    STAR_1_PROPERTY::METALLICITY,
     STAR_1_PROPERTY::LUMINOSITY,
     STAR_2_PROPERTY::LUMINOSITY,
     STAR_1_PROPERTY::TEMPERATURE,
@@ -56,6 +66,7 @@ BSE_RLOF_REC += {
 # BSE SNe Parameters
 # start with the default Supernova Parameters specification and add:
 BSE_SNE_Rec += {
+    STAR_1_PROPERTY::METALLICITY,
     SUPERNOVA_PROPERTY::LUMINOSITY,
     COMPANION_PROPERTY::LUMINOSITY,
     SUPERNOVA_PROPERTY::TEMPERATURE,
@@ -66,3 +77,8 @@ BSE_SNE_Rec += {
     COMPANION_PROPERTY::MZAMS,
 }
 
+# BSE Common Envelopes
+# start with the default Supernova Parameters specification and add:
+BSE_CEE_Rec += {
+    STAR_1_PROPERTY::METALLICITY,
+}
